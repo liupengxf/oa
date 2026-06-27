@@ -23,6 +23,11 @@ const AttendancePage = {
                         disabled>
                         今日已完成打卡
                     </el-button>
+                    <el-button 
+                        type="warning" 
+                        @click="showLeaveDialog = true">
+                        请假申请
+                    </el-button>
                 </div>
             </div>
 
@@ -63,6 +68,13 @@ const AttendancePage = {
                             <div class="stat-label">缺卡</div>
                         </div>
                     </div>
+                    <div class="stat-card sick">
+                        <div class="stat-icon">🤒</div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ stats.sickLeaveDays }}</div>
+                            <div class="stat-label">病假</div>
+                        </div>
+                    </div>
                     <div class="stat-card total">
                         <div class="stat-icon">📅</div>
                         <div class="stat-info">
@@ -100,6 +112,47 @@ const AttendancePage = {
                     </el-table-column>
                 </el-table>
             </div>
+
+            <el-dialog v-model="showLeaveDialog" title="请假申请" width="500px">
+                <el-form :model="leaveForm" label-width="80px">
+                    <el-form-item label="请假类型">
+                        <el-select v-model="leaveForm.leaveType" placeholder="请选择请假类型">
+                            <el-option label="事假" :value="1"></el-option>
+                            <el-option label="病假" :value="2"></el-option>
+                            <el-option label="年假" :value="3"></el-option>
+                            <el-option label="其他" :value="4"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="开始日期">
+                        <el-date-picker 
+                            v-model="leaveForm.startDate" 
+                            type="date" 
+                            placeholder="请选择开始日期"
+                            :disabled-date="disabledPastDate">
+                        </el-date-picker>
+                    </el-form-item>
+                    <el-form-item label="结束日期">
+                        <el-date-picker 
+                            v-model="leaveForm.endDate" 
+                            type="date" 
+                            placeholder="请选择结束日期"
+                            :disabled-date="disabledEndDate">
+                        </el-date-picker>
+                    </el-form-item>
+                    <el-form-item label="请假原因">
+                        <el-input 
+                            v-model="leaveForm.reason" 
+                            type="textarea" 
+                            rows="3" 
+                            placeholder="请输入请假原因">
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+                <template #footer>
+                    <el-button @click="showLeaveDialog = false">取消</el-button>
+                    <el-button type="primary" @click="handleLeaveSubmit">提交申请</el-button>
+                </template>
+            </el-dialog>
         </div>
     `,
     setup() {
@@ -109,6 +162,14 @@ const AttendancePage = {
         const currentDate = ref(new Date());
         const attendanceRecords = ref([]);
         const checking = ref(false);
+        const showLeaveDialog = ref(false);
+
+        const leaveForm = ref({
+            leaveType: null,
+            startDate: null,
+            endDate: null,
+            reason: ''
+        });
 
         const filteredRecords = computed(() => {
             const currentMonth = currentDate.value.getMonth();
@@ -131,20 +192,20 @@ const AttendancePage = {
             let normalDays = 0;
             let lateDays = 0;
             let absentDays = 0;
-            let restDays = 0;
+            let sickLeaveDays = 0;
 
             monthRecords.forEach(record => {
                 if (record.status === 1) normalDays++;
                 else if (record.status === 2) lateDays++;
                 else if (record.status === 3) absentDays++;
-                else if (record.status === 4) restDays++;
+                else if (record.status === 4) sickLeaveDays++;
             });
 
             const checkedDates = new Set(monthRecords.map(r => r.checkDate));
             const uncheckedDays = totalDays - checkedDates.size;
             absentDays += uncheckedDays;
 
-            return { normalDays, lateDays, absentDays, totalDays, restDays };
+            return { normalDays, lateDays, absentDays, sickLeaveDays, totalDays };
         });
 
         const canCheckIn = computed(() => {
@@ -212,6 +273,61 @@ const AttendancePage = {
             }
         };
 
+        const handleLeaveSubmit = async () => {
+            if (!leaveForm.value.leaveType) {
+                ElMessage.warning('请选择请假类型');
+                return;
+            }
+            if (!leaveForm.value.startDate) {
+                ElMessage.warning('请选择开始日期');
+                return;
+            }
+            if (!leaveForm.value.endDate) {
+                ElMessage.warning('请选择结束日期');
+                return;
+            }
+            if (!leaveForm.value.reason) {
+                ElMessage.warning('请输入请假原因');
+                return;
+            }
+
+            try {
+                const res = await axios.post('/api/leave', {
+                    leaveType: leaveForm.value.leaveType,
+                    startDate: formatDateStr(leaveForm.value.startDate),
+                    endDate: formatDateStr(leaveForm.value.endDate),
+                    reason: leaveForm.value.reason
+                });
+                if (res.data.code === 200) {
+                    ElMessage.success(res.data.message);
+                    showLeaveDialog.value = false;
+                    leaveForm.value = {
+                        leaveType: null,
+                        startDate: null,
+                        endDate: null,
+                        reason: ''
+                    };
+                    await fetchAttendanceRecords();
+                } else {
+                    ElMessage.error(res.data.message || '提交失败');
+                }
+            } catch (e) {
+                console.error('提交请假申请失败', e);
+                ElMessage.error('提交请假申请失败，请稍后重试');
+            }
+        };
+
+        const disabledPastDate = (time) => {
+            return time.getTime() < new Date().getTime() - 86400000;
+        };
+
+        const disabledEndDate = (time) => {
+            if (!leaveForm.value.startDate) {
+                return time.getTime() < new Date().getTime() - 86400000;
+            }
+            return time.getTime() < leaveForm.value.startDate.getTime();
+        };
+
         const formatDateStr = (date) => {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -229,7 +345,7 @@ const AttendancePage = {
             if (record.status === 1) return 'status-normal';
             if (record.status === 2) return 'status-late';
             if (record.status === 3) return 'status-absent';
-            if (record.status === 4) return 'status-rest';
+            if (record.status === 4) return 'status-sick';
             return 'status-absent';
         };
 
@@ -241,7 +357,7 @@ const AttendancePage = {
             if (record.status === 1) return '正常';
             if (record.status === 2) return '迟到';
             if (record.status === 3) return '缺卡';
-            if (record.status === 4) return '休息';
+            if (record.status === 4) return '病假';
             return '缺卡';
         };
 
@@ -257,7 +373,7 @@ const AttendancePage = {
             if (status === 1) return '正常';
             if (status === 2) return '迟到';
             if (status === 3) return '缺卡';
-            if (status === 4) return '休息';
+            if (status === 4) return '病假';
             return '缺卡';
         };
 
@@ -287,14 +403,20 @@ const AttendancePage = {
             canCheckOut,
             hasCheckedIn,
             hasCheckedOut,
+            showLeaveDialog,
+            leaveForm,
             handleCheckIn,
             handleCheckOut,
+            handleLeaveSubmit,
+            disabledPastDate,
+            disabledEndDate,
             getStatusClass,
             getStatusText,
             getStatusTagType,
             getStatusTextByCode,
             formatDate,
-            formatDateTime
+            formatDateTime,
+            formatDateStr
         };
     }
 };

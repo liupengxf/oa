@@ -13,8 +13,9 @@ public class JDBCUtil {
 	/*private static final String url = "jdbc:mysql://18.233.255.172:3306/bird_observation?useUnicode=true&characterEncoding=UTF-8&useSSL=false";
 	private static final String username = "root";
 	private static final String password = "TianShui#2025!";*/
-	private static final String url = "jdbc:mysql://localhost:3306/oa_office?useUnicode=true&characterEncoding=UTF-8&useSSL=false";
-	private static final String username = "root";
+	// MySQL 8.0 本地连接配置 - 添加必要的参数
+	private static final String url = "jdbc:mysql://localhost:3306/oa_office?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true";
+	private static final String username = "oa_user";
 	private static final String password = "root";
 	/**
 	 * 获取数据库连接

@@ -6,6 +6,7 @@ import org.buu.oa.entity.ApprovalRecord;
 import org.buu.oa.entity.LeaveApplication;
 import org.buu.oa.mapper.ApprovalRecordMapper;
 import org.buu.oa.mapper.LeaveApplicationMapper;
+import org.buu.oa.service.AttendanceCheckinService;
 import org.buu.oa.service.LeaveApplicationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +24,13 @@ import java.util.concurrent.atomic.AtomicLong;
 public class LeaveApplicationServiceImpl extends ServiceImpl<LeaveApplicationMapper, LeaveApplication> implements LeaveApplicationService {
 
     private final ApprovalRecordMapper approvalRecordMapper;
+    private final AttendanceCheckinService attendanceCheckinService;
     /** 序列号生成器，用于生成请假单号 */
     private final AtomicLong sequence = new AtomicLong(1);
 
-    public LeaveApplicationServiceImpl(ApprovalRecordMapper approvalRecordMapper) {
+    public LeaveApplicationServiceImpl(ApprovalRecordMapper approvalRecordMapper, AttendanceCheckinService attendanceCheckinService) {
         this.approvalRecordMapper = approvalRecordMapper;
+        this.attendanceCheckinService = attendanceCheckinService;
     }
 
     /**
@@ -67,6 +70,16 @@ public class LeaveApplicationServiceImpl extends ServiceImpl<LeaveApplicationMap
         // 更新申请状态
         if (result == 1) {
             application.setStatus("COMPLETED");  // 通过
+            
+            // 审批通过且为病假时，更新考勤记录
+            if (application.getLeaveType() != null && application.getLeaveType() == 2) {
+                attendanceCheckinService.markLeaveDates(
+                    application.getEmpId(), 
+                    application.getStartDate(), 
+                    application.getEndDate(), 
+                    4  // status=4 病假
+                );
+            }
         } else {
             application.setStatus("REJECTED");   // 驳回
         }

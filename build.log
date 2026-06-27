@@ -1,0 +1,12 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.buu.oa:oa-office-system >---------------------
+[INFO] Building oa-office-system 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ oa-office-system ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 20 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ oa-office-system ---

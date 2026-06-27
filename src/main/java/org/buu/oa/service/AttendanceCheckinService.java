@@ -32,4 +32,13 @@ public interface AttendanceCheckinService extends IService<AttendanceCheckin> {
      * @param empId 员工ID
      */
     void checkOut(Long empId);
+
+    /**
+     * 标记请假日期的考勤记录
+     * @param empId 员工ID
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @param status 考勤状态
+     */
+    void markLeaveDates(Long empId, LocalDate startDate, LocalDate endDate, Integer status);
 }

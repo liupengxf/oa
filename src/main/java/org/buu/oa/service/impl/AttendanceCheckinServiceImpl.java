@@ -100,10 +100,13 @@ public class AttendanceCheckinServiceImpl extends ServiceImpl<AttendanceCheckinM
 
     /**
      * 更新打卡状态
-     * 状态值：1-正常，2-迟到，3-缺卡
+     * 状态值：1-正常，2-迟到，3-缺卡，4-病假
      * @param checkin 打卡记录
      */
     private void updateStatus(AttendanceCheckin checkin) {
+        if (checkin.getStatus() != null && checkin.getStatus() == 4) {
+            return;
+        }
         if (checkin.getCheckInTime() == null && checkin.getCheckOutTime() == null) {
             checkin.setStatus(3);
         } else if (checkin.getCheckInTime() != null) {
@@ -113,6 +116,37 @@ public class AttendanceCheckinServiceImpl extends ServiceImpl<AttendanceCheckinM
             } else {
                 checkin.setStatus(1);
             }
+        }
+    }
+
+    /**
+     * 标记请假日期的考勤记录
+     * @param empId 员工ID
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @param status 考勤状态（4-病假）
+     */
+    @Override
+    public void markLeaveDates(Long empId, LocalDate startDate, LocalDate endDate, Integer status) {
+        LocalDate currentDate = startDate;
+        while (!currentDate.isAfter(endDate)) {
+            LambdaQueryWrapper<AttendanceCheckin> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AttendanceCheckin::getEmpId, empId);
+            wrapper.eq(AttendanceCheckin::getCheckDate, currentDate);
+            
+            AttendanceCheckin checkin = baseMapper.selectOne(wrapper);
+            if (checkin == null) {
+                checkin = new AttendanceCheckin();
+                checkin.setEmpId(empId);
+                checkin.setCheckDate(currentDate);
+                checkin.setStatus(status);
+                baseMapper.insert(checkin);
+            } else {
+                checkin.setStatus(status);
+                baseMapper.updateById(checkin);
+            }
+            
+            currentDate = currentDate.plusDays(1);
         }
     }
 }
