@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.buu.oa.mapper.OvertimeApplicationMapper">
+
+    <select id="selectPendingByDeptId" resultType="org.buu.oa.entity.OvertimeApplication">
+        SELECT oa.* FROM overtime_application oa
+        INNER JOIN emp_employee e ON oa.emp_id = e.id
+        WHERE e.dept_id = #{deptId} AND oa.status = 'PENDING'
+        ORDER BY oa.create_time DESC
+    </select>
+
+</mapper>

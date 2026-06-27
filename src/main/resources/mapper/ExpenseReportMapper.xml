@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.buu.oa.mapper.ExpenseReportMapper">
+
+    <select id="selectPendingByDeptId" resultType="org.buu.oa.entity.ExpenseReport">
+        SELECT er.* FROM expense_report er
+        INNER JOIN emp_employee e ON er.emp_id = e.id
+        WHERE e.dept_id = #{deptId} AND er.status = 'PENDING'
+        ORDER BY er.create_time DESC
+    </select>
+
+</mapper>
