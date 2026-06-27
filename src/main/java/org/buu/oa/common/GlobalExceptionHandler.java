@@ -1,5 +1,7 @@
 package org.buu.oa.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -19,6 +21,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     /**
      * 处理认证异常（401）
      * @param e 认证异常
@@ -27,6 +31,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public Result<Void> handleAuthenticationException(AuthenticationException e) {
+        logger.warn("认证失败：{}", e.getMessage());
         return Result.<Void>unauthorized("认证失败：" + e.getMessage());
     }
 
@@ -38,6 +43,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public Result<Void> handleBadCredentialsException(BadCredentialsException e) {
+        logger.warn("凭证错误：{}", e.getMessage());
         return Result.<Void>unauthorized("用户名或密码错误");
     }
 
@@ -55,6 +61,7 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
+        logger.warn("参数校验失败：{}", errors);
         return Result.error(400, "参数校验失败");
     }
 
@@ -66,6 +73,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleIllegalArgumentException(IllegalArgumentException e) {
+        logger.warn("非法参数：{}", e.getMessage());
         return Result.<Void>error(400, e.getMessage());
     }
 
@@ -77,6 +85,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleGenericException(Exception e) {
+        logger.error("服务器内部错误", e);
         return Result.<Void>error("服务器内部错误：" + e.getMessage());
     }
 }

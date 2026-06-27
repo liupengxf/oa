@@ -2,9 +2,7 @@ package org.buu.oa.controller;
 
 import org.buu.oa.common.Result;
 import org.buu.oa.entity.AttendanceCheckin;
-import org.buu.oa.entity.SysUser;
 import org.buu.oa.service.AttendanceCheckinService;
-import org.buu.oa.service.AuthService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,11 +16,12 @@ import java.util.List;
 public class AttendanceController {
 
     private final AttendanceCheckinService attendanceCheckinService;
-    private final AuthService authService;
 
-    public AttendanceController(AttendanceCheckinService attendanceCheckinService, AuthService authService) {
+    /** 默认员工ID（未实现登录功能时使用） */
+    private static final Long DEFAULT_EMP_ID = 1L;
+
+    public AttendanceController(AttendanceCheckinService attendanceCheckinService) {
         this.attendanceCheckinService = attendanceCheckinService;
-        this.authService = authService;
     }
 
     /**
@@ -31,11 +30,7 @@ public class AttendanceController {
      */
     @PostMapping("/checkin")
     public Result<Void> checkIn() {
-        SysUser user = authService.getCurrentUser();
-        if (user == null || user.getEmpId() == null) {
-            return Result.<Void>unauthorized("未登录");
-        }
-        attendanceCheckinService.checkIn(user.getEmpId());
+        attendanceCheckinService.checkIn(DEFAULT_EMP_ID);
         return Result.<Void>success("上班打卡成功", null);
     }
 
@@ -45,11 +40,7 @@ public class AttendanceController {
      */
     @PostMapping("/checkout")
     public Result<Void> checkOut() {
-        SysUser user = authService.getCurrentUser();
-        if (user == null || user.getEmpId() == null) {
-            return Result.<Void>unauthorized("未登录");
-        }
-        attendanceCheckinService.checkOut(user.getEmpId());
+        attendanceCheckinService.checkOut(DEFAULT_EMP_ID);
         return Result.<Void>success("下班打卡成功", null);
     }
 
@@ -63,11 +54,7 @@ public class AttendanceController {
     public Result<List<AttendanceCheckin>> getMonthlyAttendance(
             @RequestParam(defaultValue = "2026") int year,
             @RequestParam(defaultValue = "5") int month) {
-        SysUser user = authService.getCurrentUser();
-        if (user == null || user.getEmpId() == null) {
-            return Result.<List<AttendanceCheckin>>unauthorized("未登录");
-        }
-        List<AttendanceCheckin> records = attendanceCheckinService.getByEmpIdAndMonth(user.getEmpId(), year, month);
+        List<AttendanceCheckin> records = attendanceCheckinService.getByEmpIdAndMonth(DEFAULT_EMP_ID, year, month);
         return Result.success(records);
     }
 }

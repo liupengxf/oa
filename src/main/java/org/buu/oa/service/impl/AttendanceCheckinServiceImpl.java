@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -18,6 +19,9 @@ import java.util.List;
  */
 @Service
 public class AttendanceCheckinServiceImpl extends ServiceImpl<AttendanceCheckinMapper, AttendanceCheckin> implements AttendanceCheckinService {
+
+    /** 上班时间阈值（9:00） */
+    private static final LocalTime CHECKIN_THRESHOLD = LocalTime.of(9, 0);
 
     /**
      * 查询员工月度考勤记录
@@ -55,8 +59,13 @@ public class AttendanceCheckinServiceImpl extends ServiceImpl<AttendanceCheckinM
         }
         
         checkin.setCheckInTime(LocalDateTime.now());
-        updateStatus(checkin);  // 更新打卡状态（判断是否迟到）
-        baseMapper.insert(checkin);
+        updateStatus(checkin);
+        
+        if (checkin.getId() == null) {
+            baseMapper.insert(checkin);
+        } else {
+            baseMapper.updateById(checkin);
+        }
     }
 
     /**
@@ -80,8 +89,8 @@ public class AttendanceCheckinServiceImpl extends ServiceImpl<AttendanceCheckinM
         }
         
         checkin.setCheckOutTime(LocalDateTime.now());
-        updateStatus(checkin);  // 更新打卡状态
-        // 根据是否有ID决定插入还是更新
+        updateStatus(checkin);
+        
         if (checkin.getId() == null) {
             baseMapper.insert(checkin);
         } else {
@@ -91,15 +100,15 @@ public class AttendanceCheckinServiceImpl extends ServiceImpl<AttendanceCheckinM
 
     /**
      * 更新打卡状态
-     * 判断是否迟到（9:00之后打卡视为迟到）
+     * 状态值：1-正常，2-迟到，3-缺卡
      * @param checkin 打卡记录
      */
     private void updateStatus(AttendanceCheckin checkin) {
-        if (checkin.getCheckInTime() != null) {
-            int hour = checkin.getCheckInTime().getHour();
-            int minute = checkin.getCheckInTime().getMinute();
-            // 9:00之后打卡视为迟到（状态2），否则正常（状态1）
-            if (hour > 9 || (hour == 9 && minute > 0)) {
+        if (checkin.getCheckInTime() == null && checkin.getCheckOutTime() == null) {
+            checkin.setStatus(3);
+        } else if (checkin.getCheckInTime() != null) {
+            LocalTime checkinTime = checkin.getCheckInTime().toLocalTime();
+            if (checkinTime.isAfter(CHECKIN_THRESHOLD)) {
                 checkin.setStatus(2);
             } else {
                 checkin.setStatus(1);

@@ -24,8 +24,34 @@
         .top-bar { height: 60px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
         .top-bar-left { display: flex; align-items: center; gap: 10px; }
         .top-bar-right { display: flex; align-items: center; gap: 20px; }
-        .content-area { flex: 1; overflow: hidden; }
-        .content-area iframe { width: 100%; height: 100%; border: none; }
+        .content-area { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        .attendance-page { padding: 20px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .page-header h2 { font-size: 22px; color: #333; }
+        .header-right { display: flex; gap: 10px; }
+        .calendar-section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .calendar-cell { display: flex; flex-direction: column; align-items: center; padding: 8px 0; }
+        .date-num { font-size: 16px; font-weight: 500; }
+        .status-indicator { font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+        .status-normal { background: #f6ffed; color: #52c41a; }
+        .status-late { background: #fffbe6; color: #faad14; }
+        .status-absent { background: #fff1f0; color: #ff4d4f; }
+        .status-rest { background: #e6f7ff; color: #1890ff; }
+        .stats-section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .stats-section h3 { font-size: 18px; margin-bottom: 15px; color: #333; }
+        .stats-cards { display: flex; gap: 15px; }
+        .stat-card { flex: 1; display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 8px; }
+        .stat-card.normal { background: #f6ffed; }
+        .stat-card.late { background: #fffbe6; }
+        .stat-card.absent { background: #fff1f0; }
+        .stat-card.total { background: #e6f7ff; }
+        .stat-icon { font-size: 28px; }
+        .stat-info { display: flex; flex-direction: column; }
+        .stat-value { font-size: 24px; font-weight: 600; color: #333; }
+        .stat-label { font-size: 14px; color: #666; }
+        .detail-section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .detail-section h3 { font-size: 18px; margin-bottom: 15px; color: #333; }
     </style>
 </head>
 <body>
@@ -54,52 +80,54 @@
                         <el-badge :value="unreadCount" class="item">
                             <el-button icon="Bell" @click="navigate('/notice')"></el-button>
                         </el-badge>
-                        <el-dropdown>
-                            <span class="el-dropdown-link">
-                                {{ currentUser?.username || '用户' }} <i class="el-icon-arrow-down"></i>
-                            </span>
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template>
-                        </el-dropdown>
+                        <span>{{ currentEmployee?.name || '用户' }}</span>
                     </div>
                 </div>
                 
                 <div class="content-area">
-                    <iframe :src="currentUrl" frameborder="0"></iframe>
+                    <component :is="currentComponent"></component>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted } = Vue;
         const { ElMessage } = ElementPlus;
 
         const app = createApp({
             setup() {
+                const currentEmployee = ref(null);
                 const currentMenu = ref('/dashboard');
                 const menus = ref([
                     { id: 1, menuName: '工作台', path: '/dashboard', icon: 'DataBoard' },
                     { id: 2, menuName: '考勤管理', path: '/attendance', icon: 'Calendar' },
-                    { id: 3, menuName: '审批管理', path: '/approval', icon: 'Document' },
-                    { id: 4, menuName: '通知公告', path: '/notice', icon: 'Bell' },
-                    { id: 5, menuName: '数据报表', path: '/report', icon: 'DataAnalysis' }
+                    { id: 3, menuName: '审批流', path: '/approval', icon: 'Document' },
+                    { id: 4, menuName: '通知中心', path: '/notice', icon: 'Bell' },
+                    { id: 5, menuName: '数据看板', path: '/report', icon: 'DataAnalysis' }
                 ]);
-                const currentUser = ref({ username: '管理员', empId: 1 });
                 const unreadCount = ref(0);
 
-                const pathMap = {
-                    '/dashboard': 'pages/dashboard.html',
-                    '/attendance': 'pages/attendance.html',
-                    '/approval': 'pages/approval.html',
-                    '/notice': 'pages/notice.html',
-                    '/report': 'pages/report.html'
+                const componentMap = {
+                    '/dashboard': 'page-dashboard',
+                    '/attendance': 'page-attendance',
+                    '/approval': 'page-approval',
+                    '/notice': 'page-notice',
+                    '/report': 'page-report'
                 };
 
-                const currentUrl = ref(pathMap['/dashboard']);
+                const currentComponent = computed(() => componentMap[currentMenu.value] || 'page-dashboard');
+
+                const loadCurrentEmployee = async () => {
+                    try {
+                        const res = await axios.get('/api/employee/1');
+                        if (res.data.code === 200) {
+                            currentEmployee.value = res.data.data;
+                        }
+                    } catch (e) {
+                        console.error('加载员工信息失败', e);
+                    }
+                };
 
                 const getIcon = (icon) => {
                     const icons = {
@@ -119,11 +147,6 @@
 
                 const navigate = (path) => {
                     currentMenu.value = path;
-                    currentUrl.value = pathMap[path] || pathMap['/dashboard'];
-                };
-
-                const handleLogout = () => {
-                    ElMessage.success('已退出登录');
                 };
 
                 const fetchUnreadCount = async () => {
@@ -135,32 +158,111 @@
                     } catch (e) {}
                 };
 
-                window.addEventListener('message', (event) => {
-                    if (event.data && event.data.type === 'navigate') {
-                        navigate(event.data.path);
-                    }
-                });
-
                 onMounted(() => {
+                    loadCurrentEmployee();
                     fetchUnreadCount();
                 });
 
                 return {
+                    currentEmployee,
                     currentMenu,
                     menus,
-                    currentUser,
                     unreadCount,
-                    currentUrl,
+                    currentComponent,
                     getIcon,
                     getCurrentMenuName,
-                    handleLogout,
                     navigate
                 };
             }
         });
 
+        app.component('page-dashboard', {
+            template: `
+                <div class="dashboard-page">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">欢迎来到工作台</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 14px; color: #666;">今日待办</div>
+                            <div style="font-size: 32px; font-weight: 600; color: #333; margin-top: 10px;">5</div>
+                        </div>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 14px; color: #666;">待审批</div>
+                            <div style="font-size: 32px; font-weight: 600; color: #333; margin-top: 10px;">3</div>
+                        </div>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 14px; color: #666;">新通知</div>
+                            <div style="font-size: 32px; font-weight: 600; color: #333; margin-top: 10px;">2</div>
+                        </div>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 14px; color: #666;">本月考勤</div>
+                            <div style="font-size: 32px; font-weight: 600; color: #333; margin-top: 10px;">22天</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px;">
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 15px;">考勤统计图表</div>
+                            <div style="height: 300px; display: flex; align-items: center; justify-content: center; color: #999;">图表区域</div>
+                        </div>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 15px;">最近通知</div>
+                            <el-timeline>
+                                <el-timeline-item>新的审批任务</el-timeline-item>
+                                <el-timeline-item>考勤异常提醒</el-timeline-item>
+                                <el-timeline-item>系统维护通知</el-timeline-item>
+                            </el-timeline>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+
+        app.component('page-approval', {
+            template: `
+                <div class="approval-page">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">审批管理</div>
+                    <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                        <el-table :data="[]" border stripe>
+                            <el-table-column prop="id" label="编号"></el-table-column>
+                            <el-table-column prop="type" label="类型"></el-table-column>
+                            <el-table-column prop="title" label="标题"></el-table-column>
+                            <el-table-column prop="status" label="状态"></el-table-column>
+                            <el-table-column prop="createTime" label="创建时间"></el-table-column>
+                        </el-table>
+                        <div style="text-align: center; padding: 40px; color: #999;">暂无审批记录</div>
+                    </div>
+                </div>
+            `
+        });
+
+        app.component('page-notice', {
+            template: `
+                <div class="notice-page">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">通知中心</div>
+                    <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                        <el-timeline>
+                            <el-timeline-item>新的审批任务</el-timeline-item>
+                            <el-timeline-item>考勤异常提醒</el-timeline-item>
+                            <el-timeline-item>系统维护通知</el-timeline-item>
+                        </el-timeline>
+                    </div>
+                </div>
+            `
+        });
+
+        app.component('page-report', {
+            template: `
+                <div class="report-page">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">数据看板</div>
+                    <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                        <div style="height: 400px; display: flex; align-items: center; justify-content: center; color: #999;">报表区域</div>
+                    </div>
+                </div>
+            `
+        });
+
         app.use(ElementPlus);
         app.mount('#app');
     </script>
+    <script src="js/pages/attendance.js"></script>
 </body>
 </html>
