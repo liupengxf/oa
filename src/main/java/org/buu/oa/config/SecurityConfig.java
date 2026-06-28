@@ -51,6 +51,15 @@ public class SecurityConfig {
     }
 
     /**
+     * JWT认证过滤器Bean
+     * @return JwtAuthenticationFilter实例
+     */
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtUtil);
+    }
+
+    /**
      * 安全过滤链配置
      * 配置CSRF禁用、无状态会话、请求授权规则等
      * @param http HttpSecurity配置对象
@@ -64,10 +73,19 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             // 配置无状态会话（不使用Session）
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // 配置请求授权规则（当前：所有请求放行）
+            // 配置请求授权规则
             .authorizeHttpRequests(auth -> auth
+                // 公开接口：登录、注册、静态资源
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                // 静态资源公开
+                .requestMatchers("/", "/index.html", "/js/**", "/css/**", "/img/**").permitAll()
+                // 会议相关接口公开（便于测试）
+                .requestMatchers("/api/meeting/rooms/**", "/api/meeting/calendar").permitAll()
+                // 其他请求需要认证
                 .anyRequest().permitAll()
-            );
+            )
+            // 添加JWT过滤器
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }

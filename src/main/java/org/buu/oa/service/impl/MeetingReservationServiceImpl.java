@@ -82,4 +82,23 @@ public class MeetingReservationServiceImpl extends ServiceImpl<MeetingReservatio
         wrapper.orderByAsc(MeetingReservation::getStartTime);
         return baseMapper.selectList(wrapper);
     }
+
+    /**
+     * 查询指定日期范围内的预约记录
+     * 用于日历视图展示
+     * @param roomId 会议室ID（可选）
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 预约记录列表
+     */
+    @Override
+    public List<MeetingReservation> getByDateRange(Long roomId, LocalDateTime startTime, LocalDateTime endTime) {
+        LambdaQueryWrapper<MeetingReservation> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(roomId != null, MeetingReservation::getRoomId, roomId);
+        wrapper.eq(MeetingReservation::getStatus, 1);
+        wrapper.and(w -> w.between(MeetingReservation::getStartTime, startTime, endTime)
+                .or().between(MeetingReservation::getEndTime, startTime, endTime)
+                .or().le(MeetingReservation::getStartTime, startTime).ge(MeetingReservation::getEndTime, endTime));
+        return baseMapper.selectList(wrapper);
+    }
 }

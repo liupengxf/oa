@@ -41,4 +41,13 @@ public interface MeetingReservationService extends IService<MeetingReservation> 
      * @return 预约记录列表
      */
     List<MeetingReservation> getByRoomId(Long roomId);
+
+    /**
+     * 查询指定日期范围内的预约记录
+     * @param roomId 会议室ID（可选）
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 预约记录列表
+     */
+    List<MeetingReservation> getByDateRange(Long roomId, LocalDateTime startTime, LocalDateTime endTime);
 }
