@@ -156,7 +156,7 @@ const AttendancePage = {
         </div>
     `,
     setup() {
-        const { ref, computed, onMounted } = Vue;
+        const { ref, computed, onMounted, watch } = Vue;
         const { ElMessage } = ElementPlus;
 
         const currentDate = ref(new Date());
@@ -238,6 +238,10 @@ const AttendancePage = {
                 ElMessage.error('获取考勤记录失败');
             }
         };
+
+        watch(currentDate, () => {
+            fetchAttendanceRecords();
+        });
 
         const handleCheckIn = async () => {
             checking.value = true;
