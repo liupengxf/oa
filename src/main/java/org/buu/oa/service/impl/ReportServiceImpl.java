@@ -51,4 +51,14 @@ public class ReportServiceImpl implements ReportService {
     public List<Map<String, Object>> getExpenseReportList() {
         return reportMapper.selectExpenseReportList();
     }
+
+    @Override
+    public List<Map<String, Object>> getLeaveList() {
+        return reportMapper.selectLeaveAll();
+    }
+
+    @Override
+    public List<Map<String, Object>> getExpenseList() {
+        return reportMapper.selectExpenseAll();
+    }
 }

@@ -21,4 +21,8 @@ public interface ReportService {
     List<Map<String, Object>> getAttendanceRecords(LocalDate startDate, LocalDate endDate);
 
     List<Map<String, Object>> getExpenseReportList();
+
+    List<Map<String, Object>> getLeaveList();
+
+    List<Map<String, Object>> getExpenseList();
 }

@@ -24,14 +24,12 @@ public interface ReportMapper {
             "WHEN 1 THEN '事假' WHEN 2 THEN '病假' WHEN 3 THEN '年假' ELSE '其他' END as leaveTypeName, " +
             "COUNT(l.id) as count " +
             "FROM leave_application l " +
-            "WHERE l.status = 'COMPLETED' " +
             "GROUP BY l.leave_type")
     @MapKey("leaveTypeName")
     List<Map<String, Object>> selectLeaveTypeStats();
 
     @Select("SELECT DATE_FORMAT(r.create_time, '%Y-%m') as month, SUM(r.total_amount) as totalAmount " +
             "FROM expense_report r " +
-            "WHERE r.status = 'COMPLETED' AND r.create_time >= DATE_SUB(NOW(), INTERVAL 6 MONTH) " +
             "GROUP BY DATE_FORMAT(r.create_time, '%Y-%m') " +
             "ORDER BY month")
     @MapKey("month")
@@ -70,4 +68,24 @@ public interface ReportMapper {
             "LEFT JOIN sys_dept d ON e.dept_id = d.id " +
             "ORDER BY r.create_time DESC")
     List<Map<String, Object>> selectExpenseReportList();
+
+    @Select("SELECT e.name as empName, d.dept_name as deptName, " +
+            "CASE l.leave_type WHEN 1 THEN '事假' WHEN 2 THEN '病假' WHEN 3 THEN '年假' ELSE '其他' END as leaveTypeName, " +
+            "l.start_date as startDate, l.end_date as endDate, l.reason, " +
+            "CASE l.status WHEN 'PENDING' THEN '待审批' WHEN 'COMPLETED' THEN '已通过' WHEN 'REJECTED' THEN '已驳回' ELSE '未知' END as statusText " +
+            "FROM leave_application l " +
+            "LEFT JOIN emp_employee e ON l.emp_id = e.id " +
+            "LEFT JOIN sys_dept d ON e.dept_id = d.id " +
+            "ORDER BY l.create_time DESC")
+    List<Map<String, Object>> selectLeaveAll();
+
+    @Select("SELECT r.report_no as reportNo, e.name as empName, d.dept_name as deptName, " +
+            "r.total_amount as totalAmount, r.expense_type as expenseType, r.description, " +
+            "CASE r.status WHEN 'PENDING' THEN '待审批' WHEN 'COMPLETED' THEN '已通过' ELSE '已驳回' END as statusText, " +
+            "r.create_time as createTime " +
+            "FROM expense_report r " +
+            "LEFT JOIN emp_employee e ON r.emp_id = e.id " +
+            "LEFT JOIN sys_dept d ON e.dept_id = d.id " +
+            "ORDER BY r.create_time DESC")
+    List<Map<String, Object>> selectExpenseAll();
 }

@@ -4,9 +4,7 @@ const ReportPage = {
             <div class="page-header">
                 <h2>数据看板</h2>
                 <div class="header-right">
-                    <el-button type="success" @click="exportEmployee">导出员工台账</el-button>
-                    <el-button type="success" @click="exportAttendance">导出考勤报表</el-button>
-                    <el-button type="success" @click="exportExpense">导出报销明细</el-button>
+                    <el-button type="success" @click="exportComprehensive">导出综合报表</el-button>
                     <el-button type="primary" @click="refreshData">刷新数据</el-button>
                 </div>
             </div>
@@ -32,13 +30,6 @@ const ReportPage = {
                     </div>
                     <div ref="expenseChartRef" class="chart-container"></div>
                 </div>
-
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>考勤异常率</h3>
-                    </div>
-                    <div ref="attendanceChartRef" class="chart-container"></div>
-                </div>
             </div>
         </div>
     `,
@@ -49,12 +40,10 @@ const ReportPage = {
         const deptChartRef = ref(null);
         const leaveChartRef = ref(null);
         const expenseChartRef = ref(null);
-        const attendanceChartRef = ref(null);
 
         let deptChart = null;
         let leaveChart = null;
         let expenseChart = null;
-        let attendanceChart = null;
 
         const initCharts = () => {
             if (window.echarts) {
@@ -67,9 +56,6 @@ const ReportPage = {
                 if (expenseChartRef.value && !expenseChart) {
                     expenseChart = echarts.init(expenseChartRef.value);
                 }
-                if (attendanceChartRef.value && !attendanceChart) {
-                    attendanceChart = echarts.init(attendanceChartRef.value);
-                }
                 refreshData();
             }
         };
@@ -78,8 +64,7 @@ const ReportPage = {
             await Promise.all([
                 loadDeptEmpCount(),
                 loadLeaveTypeStats(),
-                loadExpenseTrend(),
-                loadAttendanceAbnormalRate()
+                loadExpenseTrend()
             ]);
         };
 
@@ -186,88 +171,15 @@ const ReportPage = {
             }
         };
 
-        const loadAttendanceAbnormalRate = async () => {
-            try {
-                const res = await axios.get('/api/report/attendance-abnormal-rate');
-                if (res.data.code === 200 && attendanceChart) {
-                    const data = res.data.data;
-                    const rate = data.abnormalRate || 0;
-                    const abnormalCount = data.abnormalCount || 0;
-                    const totalCount = data.totalCount || 0;
-                    
-                    attendanceChart.setOption({
-                        series: [{
-                            type: 'gauge',
-                            startAngle: 200,
-                            endAngle: -20,
-                            min: 0,
-                            max: 100,
-                            splitNumber: 5,
-                            axisLine: {
-                                lineStyle: {
-                                    width: 20,
-                                    color: [
-                                        [0.3, '#5470c6'],
-                                        [0.7, '#fac858'],
-                                        [1, '#ee6666']
-                                    ]
-                                }
-                            },
-                            pointer: { itemStyle: { color: '#ee6666' }, length: '60%', width: 6 },
-                            axisTick: { show: false },
-                            splitLine: { length: 15, lineStyle: { color: '#999', width: 2 } },
-                            axisLabel: { formatter: '{value}%', color: '#666', fontSize: 12 },
-                            detail: {
-                                valueAnimation: true,
-                                formatter: '{value}%',
-                                color: '#ee6666',
-                                fontSize: 24,
-                                fontWeight: 'bold',
-                                offsetCenter: [0, '70%']
-                            },
-                            data: [{ value: rate, name: '异常率' }]
-                        }],
-                        graphic: [{
-                            type: 'group',
-                            left: 'center',
-                            top: '85%',
-                            children: [{
-                                type: 'text',
-                                style: {
-                                    text: `异常: ${abnormalCount} / 总计: ${totalCount}`,
-                                    fill: '#666',
-                                    fontSize: 12
-                                },
-                                left: 'center'
-                            }]
-                        }]
-                    });
-                }
-            } catch (e) {
-                console.error('加载考勤异常率失败', e);
-            }
-        };
-
-        const exportEmployee = () => {
-            window.open('/api/report/export/employee', '_blank');
-            ElMessage.success('正在导出员工台账...');
-        };
-
-        const exportAttendance = () => {
-            window.open('/api/report/export/attendance', '_blank');
-            ElMessage.success('正在导出考勤报表...');
-        };
-
-        const exportExpense = () => {
-            window.open('/api/report/export/expense', '_blank');
-            ElMessage.success('正在导出报销明细...');
+        const exportComprehensive = () => {
+            window.open('/api/report/export/comprehensive', '_blank');
+            ElMessage.success('正在导出综合报表...');
         };
 
         const handleResize = () => {
             deptChart && deptChart.resize();
             leaveChart && leaveChart.resize();
             expenseChart && expenseChart.resize();
-            attendanceChart && attendanceChart.resize();
         };
 
         onMounted(() => {
@@ -282,18 +194,14 @@ const ReportPage = {
             deptChart && deptChart.dispose();
             leaveChart && leaveChart.dispose();
             expenseChart && expenseChart.dispose();
-            attendanceChart && attendanceChart.dispose();
         });
 
         return {
             deptChartRef,
             leaveChartRef,
             expenseChartRef,
-            attendanceChartRef,
             refreshData,
-            exportEmployee,
-            exportAttendance,
-            exportExpense
+            exportComprehensive
         };
     }
 };

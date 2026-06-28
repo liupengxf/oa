@@ -32,13 +32,11 @@ const AttendancePage = {
             </div>
 
             <div class="calendar-section">
-                <el-calendar v-model="currentDate">
+                <el-calendar v-model="currentDate" :cell-class-name="getCellClassName">
                     <template #dateCell="{ date, data }">
-                        <div class="calendar-cell">
-                            <span class="date-num">{{ data.day }}</span>
-                            <div class="status-indicator" :class="getStatusClass(date)">
-                                {{ getStatusText(date) }}
-                            </div>
+                        <div class="calendar-cell" :style="getCellStyle(date)">
+                            <span class="date-num">{{ data.day.split('-').slice(-1)[0] }}</span>
+                            <span class="status-text">{{ getStatusText(date) }}</span>
                         </div>
                     </template>
                 </el-calendar>
@@ -353,16 +351,44 @@ const AttendancePage = {
             return 'status-absent';
         };
 
+        const getCellStyle = (date) => {
+            const dateStr = formatDateStr(date);
+            const record = attendanceRecords.value.find(r => r.checkDate === dateStr);
+            console.log('转换后的日期:', dateStr, '找到的记录:', record); // 打印看看
+            if (!record) {
+                return { backgroundColor: '#fff1f0' };
+            }
+            if (record.status === 1) return { backgroundColor: '#f6ffed' };
+            if (record.status === 2) return { backgroundColor: '#fffbe6' };
+            if (record.status === 3) return { backgroundColor: '#fff1f0' };
+            if (record.status === 4) return { backgroundColor: '#e6f7ff' };
+            return { backgroundColor: '#fff1f0' };
+        };
+
         const getStatusText = (date) => {
             const dateStr = formatDateStr(date);
             const record = attendanceRecords.value.find(r => r.checkDate === dateStr);
-            
+            console.log('转换后的日期:', dateStr, '找到的记录:', record); // 打印看看
             if (!record) return '缺卡';
             if (record.status === 1) return '正常';
             if (record.status === 2) return '迟到';
             if (record.status === 3) return '缺卡';
             if (record.status === 4) return '病假';
             return '缺卡';
+        };
+
+        const getCellClassName = ({ date }) => {
+            const dateStr = formatDateStr(date);
+            const record = attendanceRecords.value.find(r => r.checkDate === dateStr);
+            
+            if (!record) {
+                return 'status-absent';
+            }
+            if (record.status === 1) return 'status-normal';
+            if (record.status === 2) return 'status-late';
+            if (record.status === 3) return 'status-absent';
+            if (record.status === 4) return 'status-sick';
+            return 'status-absent';
         };
 
         const getStatusTagType = (status) => {
@@ -416,6 +442,8 @@ const AttendancePage = {
             disabledEndDate,
             getStatusClass,
             getStatusText,
+            getCellClassName,
+            getCellStyle,
             getStatusTagType,
             getStatusTextByCode,
             formatDate,
