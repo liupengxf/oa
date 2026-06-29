@@ -107,7 +107,7 @@ app.component('page-approval', {
                     <el-row :gutter="20">
                         <el-col span="8">
                             <el-form-item label="报销类型" label-width="80px">
-                                <el-select v-model="expenseForm.expenseType" placeholder="请选择">
+                                <el-select v-model="expenseForm.expenseType" placeholder="请选择" clearable>
                                     <el-option label="差旅费" value="差旅费"></el-option>
                                     <el-option label="交通费" value="交通费"></el-option>
                                     <el-option label="餐饮费" value="餐饮费"></el-option>
@@ -119,7 +119,7 @@ app.component('page-approval', {
                         </el-col>
                         <el-col span="8">
                             <el-form-item label="报销总金额" label-width="80px">
-                                <el-input v-model="expenseForm.totalAmount" type="number" suffix="元"></el-input>
+                                <el-input :value="totalAmount" readonly type="number" suffix="元" style="background: #f5f7fa;"></el-input>
                             </el-form-item>
                         </el-col>
                         <el-col span="8">
@@ -139,7 +139,7 @@ app.component('page-approval', {
                             <el-row :gutter="16">
                                 <el-col span="5">
                                     <el-form-item label="费用类型" label-width="70px">
-                                        <el-select v-model="item.feeType" placeholder="选择">
+                                        <el-select v-model="item.feeType" placeholder="选择" clearable>
                                             <el-option label="交通" value="交通"></el-option>
                                             <el-option label="住宿" value="住宿"></el-option>
                                             <el-option label="餐饮" value="餐饮"></el-option>
@@ -209,7 +209,7 @@ app.component('page-approval', {
         </div>
     `,
     setup() {
-        const { ref, onMounted, nextTick } = Vue;
+        const { ref, computed, onMounted, nextTick } = Vue;
         const { ElMessage } = ElementPlus;
 
         const activeTab = ref('overtime');
@@ -228,13 +228,22 @@ app.component('page-approval', {
 
         const expenseForm = ref({
             expenseType: '',
-            totalAmount: null,
             description: '',
             details: [{ feeType: '', amount: '', expenseDate: '', fileList: [] }]
         });
 
         const previewDialog = ref(false);
         const previewImgUrl = ref('');
+
+        const totalAmount = computed(() => {
+            let sum = 0;
+            expenseForm.value.details.forEach(item => {
+                if (item.amount && !isNaN(item.amount)) {
+                    sum += parseFloat(item.amount);
+                }
+            });
+            return sum;
+        });
 
         const approveForm = ref({
             id: null,
@@ -305,8 +314,12 @@ app.component('page-approval', {
         };
 
         const submitExpense = async () => {
-            if (!expenseForm.value.expenseType || !expenseForm.value.totalAmount) {
-                ElMessage.warning('请填写报销类型和总金额');
+            if (!expenseForm.value.expenseType) {
+                ElMessage.warning('请选择报销类型');
+                return;
+            }
+            if (totalAmount.value <= 0) {
+                ElMessage.warning('请填写有效的报销金额');
                 return;
             }
             let hasDetail = false;
@@ -326,13 +339,13 @@ app.component('page-approval', {
             try {
                 await axios.post('/api/expense', {
                     expenseType: expenseForm.value.expenseType,
-                    totalAmount: expenseForm.value.totalAmount,
+                    totalAmount: totalAmount.value,
                     description: expenseForm.value.description,
                     details: details
                 });
                 ElMessage.success('报销申请提交成功');
                 showExpenseDialog.value = false;
-                expenseForm.value = { expenseType: '', totalAmount: null, description: '', details: [{ feeType: '', amount: '', expenseDate: '', fileList: [] }] };
+                expenseForm.value = { expenseType: '', description: '', details: [{ feeType: '', amount: '', expenseDate: '', fileList: [] }] };
                 loadExpenseList();
             } catch (e) {
                 ElMessage.error('提交失败');
@@ -412,6 +425,7 @@ app.component('page-approval', {
             showApproveDialog,
             previewDialog,
             previewImgUrl,
+            totalAmount,
             overtimeForm,
             expenseForm,
             approveForm,
