@@ -65,6 +65,49 @@
         .room-color-4 { background: #fff1f0; color: #f5222d; }
         .room-color-5 { background: #f9f0ff; color: #722ed1; }
         
+        .calendar-event-layout { display: flex; gap: 20px; }
+        .calendar-left { width: 280px; flex-shrink: 0; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .calendar-right { flex: 1; }
+        .calendar-month-title { text-align: center; margin-bottom: 15px; }
+        .calendar-mini-header { display: flex; justify-content: space-around; font-size: 12px; color: #999; margin-bottom: 8px; }
+        .calendar-mini { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .calendar-mini-day { height: 32px; display: flex; align-items: center; justify-content: center; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .calendar-mini-day:hover { background: #f0f0f0; }
+        .calendar-mini-day.today { background: #1890ff; color: #fff; }
+        .calendar-mini-day.selected { background: #52c41a; color: #fff; }
+        .calendar-mini-day.has-event { position: relative; }
+        .calendar-mini-day.has-event::after { content: ''; position: absolute; bottom: 2px; width: 6px; height: 6px; border-radius: 50%; background: #f5222d; }
+        .calendar-mini-day.other-month { color: #ccc; }
+        
+        .event-filter-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .event-filter-tab { padding: 6px 16px; border-radius: 20px; font-size: 14px; cursor: pointer; transition: all 0.2s; background: #f5f5f5; color: #666; }
+        .event-filter-tab:hover { background: #e8e8e8; }
+        .event-filter-tab.active { background: #1890ff; color: #fff; }
+        
+        .event-list { display: flex; flex-direction: column; gap: 15px; }
+        .event-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .event-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .event-card-header { display: flex; align-items: flex-start; gap: 12px; }
+        .event-card-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .event-card-icon.room-1 { background: #e6f7ff; }
+        .event-card-icon.room-2 { background: #f6ffed; }
+        .event-card-icon.room-3 { background: #fffbe6; }
+        .event-card-icon.room-4 { background: #fff1f0; }
+        .event-card-icon.room-5 { background: #f9f0ff; }
+        .event-card-title { font-size: 16px; font-weight: 600; color: #333; }
+        .event-card-status { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .event-card-status.ongoing { background: #f6ffed; color: #52c41a; }
+        .event-card-status.upcoming { background: #e6f7ff; color: #1890ff; }
+        .event-card-status.finished { background: #f5f5f5; color: #999; }
+        .event-card-body { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e8e8e8; }
+        .event-card-info { display: flex; gap: 8px; margin-bottom: 8px; }
+        .event-card-info:last-child { margin-bottom: 0; }
+        .event-card-info-label { font-size: 12px; color: #999; min-width: 70px; }
+        .event-card-info-value { font-size: 14px; color: #333; }
+        .event-card-footer { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e8e8e8; display: flex; align-items: center; gap: 8px; }
+        .event-card-footer-text { font-size: 12px; color: #999; }
+        .event-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        
         .report-page { padding: 20px; }
         .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
         .chart-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
@@ -122,7 +165,7 @@
                 const menus = ref([
                     { id: 1, menuName: '工作台', path: '/dashboard', icon: 'DataBoard' },
                     { id: 2, menuName: '考勤管理', path: '/attendance', icon: 'Calendar' },
-                    { id: 3, menuName: '审批流', path: '/approval', icon: 'Document' },
+                    { id: 3, menuName: '审批管理', path: '/approval', icon: 'Document' },
                     { id: 4, menuName: '会议预约', path: '/meeting', icon: 'Meeting' },
                     { id: 5, menuName: '通知中心', path: '/notice', icon: 'Bell' },
                     { id: 6, menuName: '数据看板', path: '/report', icon: 'DataAnalysis' }
@@ -272,473 +315,13 @@
             `
         });
 
-        app.component('page-meeting', {
-            template: `
-                <div class="meeting-page">
-                    <el-tabs v-model="activeTab" type="border-card" @tab-change="handleTabChange">
-                        <el-tab-pane label="会议室管理" name="rooms">
-                            <div class="page-header">
-                                <h2>会议室管理</h2>
-                                <div class="header-right">
-                                    <el-button type="primary" @click="showRoomDialog = true">添加会议室</el-button>
-                                </div>
-                            </div>
-                            <div style="background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
-                                <el-table :data="rooms" border stripe>
-                                    <el-table-column prop="id" label="ID"></el-table-column>
-                                    <el-table-column prop="roomName" label="会议室名称"></el-table-column>
-                                    <el-table-column prop="roomCode" label="编码"></el-table-column>
-                                    <el-table-column prop="capacity" label="容纳人数"></el-table-column>
-                                    <el-table-column prop="location" label="位置"></el-table-column>
-                                    <el-table-column prop="status" label="状态">
-                                        <template #default="{ row }">
-                                            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-                                                {{ row.status === 1 ? '可用' : '已停用' }}
-                                            </el-tag>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column label="操作">
-                                        <template #default="{ row }">
-                                            <el-button size="small" @click="editRoom(row)">编辑</el-button>
-                                            <el-button size="small" :type="row.status === 1 ? 'warning' : 'success'" 
-                                                       @click="toggleRoomStatus(row)">
-                                                {{ row.status === 1 ? '停用' : '启用' }}
-                                            </el-button>
-                                        </template>
-                                    </el-table-column>
-                                </el-table>
-                            </div>
-                        </el-tab-pane>
-
-                        <el-tab-pane label="预约会议" name="reserve">
-                            <div class="page-header">
-                                <h2>预约会议</h2>
-                            </div>
-                            <div style="background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 20px;">
-                                <el-form :model="reservationForm" label-width="100px">
-                                    <el-form-item label="选择会议室">
-                                        <el-select v-model="reservationForm.roomId" placeholder="请选择会议室">
-                                            <el-option v-for="room in availableRooms" :key="room.id" 
-                                                        :label="room.roomName + ' (' + room.capacity + '人)'" 
-                                                        :value="room.id"></el-option>
-                                        </el-select>
-                                    </el-form-item>
-                                    <el-form-item label="会议主题">
-                                        <el-input v-model="reservationForm.meetingTitle" placeholder="请输入会议主题"></el-input>
-                                    </el-form-item>
-                                    <el-form-item label="开始时间">
-                                        <el-date-picker v-model="reservationForm.startTime" type="datetime" placeholder="选择开始时间"></el-date-picker>
-                                    </el-form-item>
-                                    <el-form-item label="结束时间">
-                                        <el-date-picker v-model="reservationForm.endTime" type="datetime" placeholder="选择结束时间"></el-date-picker>
-                                    </el-form-item>
-                                    <el-form-item label="会议说明">
-                                        <el-input v-model="reservationForm.description" type="textarea" placeholder="请输入会议说明"></el-input>
-                                    </el-form-item>
-                                    <el-form-item>
-                                        <el-button type="primary" @click="checkAvailability">检查可用性</el-button>
-                                        <el-button type="success" @click="submitReservation">提交预约</el-button>
-                                        <el-button @click="resetForm">重置</el-button>
-                                    </el-form-item>
-                                </el-form>
-                                <div v-if="availabilityChecked" style="margin-top: 15px; padding: 15px; border-radius: 8px;"
-                                     :class="isAvailable ? 'available-message' : 'unavailable-message'">
-                                    <span>{{ isAvailable ? '✓ 该时间段可用' : '✗ 该时间段已被占用，请选择其他时间' }}</span>
-                                </div>
-                            </div>
-                        </el-tab-pane>
-
-                        <el-tab-pane label="我的预约" name="myreservations">
-                            <div class="page-header">
-                                <h2>我的预约记录</h2>
-                            </div>
-                            <div style="background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
-                                <el-table :data="myReservations" border stripe>
-                                    <el-table-column prop="reservationNo" label="预约单号"></el-table-column>
-                                    <el-table-column prop="roomId" label="会议室">
-                                        <template #default="{ row }">
-                                            {{ getRoomName(row.roomId) }}
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column prop="meetingTitle" label="会议主题"></el-table-column>
-                                    <el-table-column prop="startTime" label="开始时间"></el-table-column>
-                                    <el-table-column prop="endTime" label="结束时间"></el-table-column>
-                                    <el-table-column prop="status" label="状态">
-                                        <template #default="{ row }">
-                                            <el-tag :type="row.status === 1 ? 'success' : 'info'">
-                                                {{ row.status === 1 ? '有效' : '已取消' }}
-                                            </el-tag>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column label="操作">
-                                        <template #default="{ row }">
-                                            <el-button v-if="row.status === 1" size="small" type="danger" 
-                                                       @click="cancelReservation(row)">取消</el-button>
-                                        </template>
-                                    </el-table-column>
-                                </el-table>
-                            </div>
-                        </el-tab-pane>
-
-                        <el-tab-pane label="日历视图" name="calendar">
-                            <div class="page-header">
-                                <h2>会议室日历</h2>
-                                <div class="header-right">
-                                    <el-select v-model="calendarRoomId" placeholder="选择会议室">
-                                        <el-option :value="null" label="所有会议室"></el-option>
-                                        <el-option v-for="room in availableRooms" :key="room.id" 
-                                                    :label="room.roomName" :value="room.id"></el-option>
-                                    </el-select>
-                                </div>
-                            </div>
-                            <div style="background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 20px;">
-                                <el-calendar v-model="calendarDate">
-                                    <template #dateCell="{ data }">
-                                        <div class="calendar-cell">
-                                            <span class="date-num">{{ data.day }}</span>
-                                            <div v-if="getDayReservations(data.date).length > 0" style="width: 100%; margin-top: 4px;">
-                                                <div v-for="(res, idx) in getDayReservations(data.date).slice(0, 2)" :key="idx"
-                                                     style="font-size: 10px; padding: 2px 4px; margin-bottom: 2px; border-radius: 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                                                     :class="getRoomClass(res.roomId)">
-                                                    {{ getRoomName(res.roomId) }}: {{ formatTime(res.startTime) }}
-                                                </div>
-                                                <div v-if="getDayReservations(data.date).length > 2" 
-                                                     style="font-size: 10px; color: #999; text-align: center;">
-                                                    +{{ getDayReservations(data.date).length - 2 }}项
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </el-calendar>
-                            </div>
-                        </el-tab-pane>
-                    </el-tabs>
-
-                    <el-dialog v-model="showRoomDialog" title="添加会议室" width="400px">
-                        <el-form :model="roomForm" label-width="80px">
-                            <el-form-item label="会议室名称">
-                                <el-input v-model="roomForm.roomName"></el-input>
-                            </el-form-item>
-                            <el-form-item label="会议室编码">
-                                <el-input v-model="roomForm.roomCode"></el-input>
-                            </el-form-item>
-                            <el-form-item label="容纳人数">
-                                <el-input-number v-model="roomForm.capacity" :min="1"></el-input-number>
-                            </el-form-item>
-                            <el-form-item label="位置">
-                                <el-input v-model="roomForm.location"></el-input>
-                            </el-form-item>
-                        </el-form>
-                        <template #footer>
-                            <el-button @click="showRoomDialog = false">取消</el-button>
-                            <el-button type="primary" @click="saveRoom">确定</el-button>
-                        </template>
-                    </el-dialog>
-                </div>
-            `,
-            setup() {
-                const { ref, onMounted } = Vue;
-                const { ElMessage } = ElementPlus;
-
-                const activeTab = ref('rooms');
-                const rooms = ref([]);
-                const availableRooms = ref([]);
-                const myReservations = ref([]);
-                const calendarReservations = ref([]);
-                const calendarDate = ref(new Date());
-                const calendarRoomId = ref(null);
-
-                const showRoomDialog = ref(false);
-                const roomForm = ref({ roomName: '', roomCode: '', capacity: 10, location: '' });
-                const editingRoom = ref(null);
-
-                const reservationForm = ref({
-                    roomId: null,
-                    meetingTitle: '',
-                    startTime: null,
-                    endTime: null,
-                    description: ''
-                });
-                const availabilityChecked = ref(false);
-                const isAvailable = ref(false);
-
-                const roomColors = {
-                    1: 'background: #e6f7ff; color: #1890ff;',
-                    2: 'background: #f6ffed; color: #52c41a;',
-                    3: 'background: #fffbe6; color: #faad14;',
-                    4: 'background: #fff1f0; color: #f5222d;',
-                    5: 'background: #f9f0ff; color: #722ed1;'
-                };
-
-                const getRoomColor = (roomId) => {
-                    const keys = Object.keys(roomColors);
-                    const idx = (roomId - 1) % keys.length;
-                    return roomColors[keys[idx]] || roomColors[1];
-                };
-
-                const getRoomClass = (roomId) => {
-                    const classes = {
-                        1: 'room-color-1',
-                        2: 'room-color-2',
-                        3: 'room-color-3',
-                        4: 'room-color-4',
-                        5: 'room-color-5'
-                    };
-                    const idx = (roomId - 1) % 5;
-                    return classes[idx + 1] || 'room-color-1';
-                };
-
-                const loadRooms = async () => {
-                    try {
-                        const res = await axios.get('/api/meeting/rooms/all');
-                        if (res.data.code === 200) {
-                            rooms.value = res.data.data;
-                        }
-                        const availableRes = await axios.get('/api/meeting/rooms');
-                        if (availableRes.data.code === 200) {
-                            availableRooms.value = availableRes.data.data;
-                        }
-                    } catch (e) {
-                        console.error('加载会议室失败', e);
-                    }
-                };
-
-                const loadMyReservations = async () => {
-                    try {
-                        const res = await axios.get('/api/meeting/reservations/my');
-                        if (res.data.code === 200) {
-                            myReservations.value = res.data.data;
-                        }
-                    } catch (e) {
-                        console.error('加载预约失败', e);
-                    }
-                };
-
-                const loadCalendarData = async () => {
-                    const startDate = formatDate(calendarDate.value);
-                    const endDate = formatDate(addDays(calendarDate.value, 30));
-                    try {
-                        const url = `/api/meeting/calendar?startDate=${startDate}&endDate=${endDate}`;
-                        const res = await axios.get(url);
-                        if (res.data.code === 200) {
-                            calendarReservations.value = res.data.data.reservations;
-                        }
-                    } catch (e) {
-                        console.error('加载日历数据失败', e);
-                    }
-                };
-
-                const saveRoom = async () => {
-                    if (!roomForm.value.roomName || !roomForm.value.roomCode) {
-                        ElMessage.warning('请填写会议室名称和编码');
-                        return;
-                    }
-                    try {
-                        const res = await axios.post('/api/meeting/rooms', roomForm.value);
-                        if (res.data.code === 200) {
-                            ElMessage.success('会议室创建成功');
-                            showRoomDialog.value = false;
-                            roomForm.value = { roomName: '', roomCode: '', capacity: 10, location: '' };
-                            loadRooms();
-                        }
-                    } catch (e) {
-                        ElMessage.error('创建失败');
-                    }
-                };
-
-                const editRoom = (row) => {
-                    editingRoom.value = row;
-                    roomForm.value = { ...row };
-                    showRoomDialog.value = true;
-                };
-
-                const toggleRoomStatus = async (row) => {
-                    try {
-                        const res = await axios.put(`/api/meeting/rooms/${row.id}`, {
-                            ...row,
-                            status: row.status === 1 ? 0 : 1
-                        });
-                        if (res.data.code === 200) {
-                            ElMessage.success(row.status === 1 ? '已停用' : '已启用');
-                            loadRooms();
-                        }
-                    } catch (e) {
-                        ElMessage.error('操作失败');
-                    }
-                };
-
-                const checkAvailability = async () => {
-                    if (!reservationForm.value.roomId || !reservationForm.value.startTime || !reservationForm.value.endTime) {
-                        ElMessage.warning('请先选择会议室和时间');
-                        return;
-                    }
-                    const startTime = formatDateTime(reservationForm.value.startTime);
-                    const endTime = formatDateTime(reservationForm.value.endTime);
-                    try {
-                        const res = await axios.get('/api/meeting/calendar', {
-                            params: {
-                                roomId: reservationForm.value.roomId,
-                                startDate: startTime.split('T')[0],
-                                endDate: endTime.split('T')[0]
-                            }
-                        });
-                        if (res.data.code === 200) {
-                            const reservations = res.data.data.reservations;
-                            isAvailable.value = !reservations.some(r => 
-                                checkTimeOverlap(r.startTime, r.endTime, startTime, endTime)
-                            );
-                            availabilityChecked.value = true;
-                        }
-                    } catch (e) {
-                        ElMessage.error('检查失败');
-                    }
-                };
-
-                const checkTimeOverlap = (existingStart, existingEnd, newStart, newEnd) => {
-                    return !(new Date(existingEnd) <= new Date(newStart) || 
-                             new Date(existingStart) >= new Date(newEnd));
-                };
-
-                const submitReservation = async () => {
-                    if (!reservationForm.value.roomId || !reservationForm.value.meetingTitle || 
-                        !reservationForm.value.startTime || !reservationForm.value.endTime) {
-                        ElMessage.warning('请填写完整信息');
-                        return;
-                    }
-                    const startTime = formatDateTime(reservationForm.value.startTime);
-                    const endTime = formatDateTime(reservationForm.value.endTime);
-                    try {
-                        const res = await axios.post('/api/meeting/reservations', {
-                            roomId: reservationForm.value.roomId,
-                            meetingTitle: reservationForm.value.meetingTitle,
-                            startTime: startTime,
-                            endTime: endTime,
-                            description: reservationForm.value.description
-                        });
-                        if (res.data.code === 200) {
-                            ElMessage.success('预约成功');
-                            resetForm();
-                            loadMyReservations();
-                            loadCalendarData();
-                        } else {
-                            ElMessage.error(res.data.msg);
-                        }
-                    } catch (e) {
-                        ElMessage.error(e.response?.data?.msg || '预约失败');
-                    }
-                };
-
-                const resetForm = () => {
-                    reservationForm.value = {
-                        roomId: null,
-                        meetingTitle: '',
-                        startTime: null,
-                        endTime: null,
-                        description: ''
-                    };
-                    availabilityChecked.value = false;
-                    isAvailable.value = false;
-                };
-
-                const cancelReservation = async (row) => {
-                    try {
-                        const res = await axios.delete(`/api/meeting/reservations/${row.id}`);
-                        if (res.data.code === 200) {
-                            ElMessage.success('已取消');
-                            loadMyReservations();
-                            loadCalendarData();
-                        } else {
-                            ElMessage.error(res.data.msg);
-                        }
-                    } catch (e) {
-                        ElMessage.error(e.response?.data?.msg || '取消失败');
-                    }
-                };
-
-                const getRoomName = (roomId) => {
-                    const room = rooms.value.find(r => r.id === roomId);
-                    return room ? room.roomName : '未知';
-                };
-
-                const getDayReservations = (date) => {
-                    const dateStr = formatDate(date);
-                    return calendarReservations.value.filter(r => {
-                        if (calendarRoomId.value && r.roomId !== calendarRoomId.value) return false;
-                        const resDate = r.startTime.split('T')[0];
-                        return resDate === dateStr;
-                    });
-                };
-
-                const formatDate = (date) => {
-                    const d = new Date(date);
-                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                };
-
-                const formatDateTime = (date) => {
-                    const d = new Date(date);
-                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:00`;
-                };
-
-                const formatTime = (datetimeStr) => {
-                    return datetimeStr.split('T')[1]?.slice(0, 5) || '';
-                };
-
-                const addDays = (date, days) => {
-                    const d = new Date(date);
-                    d.setDate(d.getDate() + days);
-                    return d;
-                };
-
-                const handleTabChange = (tab) => {
-                    if (tab === 'myreservations') {
-                        loadMyReservations();
-                    } else if (tab === 'calendar') {
-                        loadCalendarData();
-                    }
-                };
-
-                onMounted(() => {
-                    loadRooms();
-                });
-
-                return {
-                    activeTab,
-                    rooms,
-                    availableRooms,
-                    myReservations,
-                    calendarReservations,
-                    calendarDate,
-                    calendarRoomId,
-                    showRoomDialog,
-                    roomForm,
-                    editingRoom,
-                    reservationForm,
-                    availabilityChecked,
-                    isAvailable,
-                    getRoomColor,
-                    getRoomClass,
-                    loadRooms,
-                    loadMyReservations,
-                    loadCalendarData,
-                    saveRoom,
-                    editRoom,
-                    toggleRoomStatus,
-                    checkAvailability,
-                    submitReservation,
-                    resetForm,
-                    cancelReservation,
-                    getRoomName,
-                    getDayReservations,
-                    formatTime,
-                    handleTabChange
-                };
-            }
-        });
-
+    </script>
+    <script src="js/pages/attendance.js"></script>
+    <script src="js/pages/meeting.js"></script>
+    <script src="js/pages/report.js"></script>
+    <script>
         app.use(ElementPlus);
         app.mount('#app');
     </script>
-    <script src="js/pages/attendance.js"></script>
-    <script src="js/pages/report.js"></script>
 </body>
 </html>
