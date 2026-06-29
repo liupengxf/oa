@@ -102,28 +102,97 @@ app.component('page-approval', {
                 </template>
             </el-dialog>
 
-            <el-dialog v-model="showExpenseDialog" title="报销申请" width="500px">
-                <el-form :model="expenseForm" label-width="100px">
-                    <el-form-item label="报销类型">
-                        <el-select v-model="expenseForm.expenseType" placeholder="请选择报销类型">
-                            <el-option label="差旅费" value="差旅费"></el-option>
-                            <el-option label="交通费" value="交通费"></el-option>
-                            <el-option label="餐饮费" value="餐饮费"></el-option>
-                            <el-option label="办公用品" value="办公用品"></el-option>
-                            <el-option label="其他" value="其他"></el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="报销金额">
-                        <el-input v-model="expenseForm.totalAmount" type="number" placeholder="请输入报销金额" prefix="¥"></el-input>
-                    </el-form-item>
-                    <el-form-item label="报销说明">
-                        <el-input v-model="expenseForm.description" type="textarea" :rows="3" placeholder="请输入报销说明"></el-input>
-                    </el-form-item>
-                </el-form>
+            <el-dialog v-model="showExpenseDialog" title="报销申请" width="800px">
+                <div style="padding: 10px;">
+                    <el-row :gutter="20">
+                        <el-col span="8">
+                            <el-form-item label="报销类型" label-width="80px">
+                                <el-select v-model="expenseForm.expenseType" placeholder="请选择">
+                                    <el-option label="差旅费" value="差旅费"></el-option>
+                                    <el-option label="交通费" value="交通费"></el-option>
+                                    <el-option label="餐饮费" value="餐饮费"></el-option>
+                                    <el-option label="办公用品" value="办公用品"></el-option>
+                                    <el-option label="业务招待" value="业务招待"></el-option>
+                                    <el-option label="其他" value="其他"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                        <el-col span="8">
+                            <el-form-item label="报销总金额" label-width="80px">
+                                <el-input v-model="expenseForm.totalAmount" type="number" suffix="元"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col span="8">
+                            <el-form-item label="报销事由" label-width="80px">
+                                <el-input v-model="expenseForm.description"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <div style="margin-top: 20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <h4 style="font-weight: 600;">报销明细（每条明细可上传多张发票）</h4>
+                            <el-button type="primary" size="small" @click="addExpenseDetail">+ 新增明细</el-button>
+                        </div>
+
+                        <div v-for="(item, index) in expenseForm.details" :key="index" style="border: 1px solid #e5e7eb; padding: 16px; border-radius: 4px; margin-bottom: 12px;">
+                            <el-row :gutter="16">
+                                <el-col span="5">
+                                    <el-form-item label="费用类型" label-width="70px">
+                                        <el-select v-model="item.feeType" placeholder="选择">
+                                            <el-option label="交通" value="交通"></el-option>
+                                            <el-option label="住宿" value="住宿"></el-option>
+                                            <el-option label="餐饮" value="餐饮"></el-option>
+                                            <el-option label="物料" value="物料"></el-option>
+                                            <el-option label="其他" value="其他"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col span="4">
+                                    <el-form-item label="单笔金额" label-width="70px">
+                                        <el-input v-model="item.amount" type="number" suffix="元"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col span="4">
+                                    <el-form-item label="费用日期" label-width="70px">
+                                        <el-date-picker v-model="item.expenseDate" type="date" placeholder="选择日期" style="width: 100%;"></el-date-picker>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col span="8">
+                                    <el-form-item label="发票附件" label-width="70px">
+                                        <el-upload
+                                          v-model:file-list="item.fileList"
+                                          list-type="picture-card"
+                                          :auto-upload="false"
+                                          accept="image/jpg,image/jpeg,image/png"
+                                          :limit="5"
+                                          :on-change="(file) => handleFileChange(file, index)"
+                                          :on-preview="(file) => openImagePreview(file)"
+                                        >
+                                          <template #default>
+                                            <el-icon><Plus /></el-icon>
+                                          </template>
+                                        </el-upload>
+                                        <div style="font-size: 12px; color: #999; margin-top: 6px;">支持JPG/PNG，最多5张</div>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col span="3">
+                                    <el-form-item label="操作" label-width="70px">
+                                        <el-button type="danger" size="small" @click="delExpenseDetail(index)">删除</el-button>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                        </div>
+                    </div>
+                </div>
                 <template #footer>
                     <el-button @click="showExpenseDialog = false">取消</el-button>
-                    <el-button type="primary" @click="submitExpense">提交申请</el-button>
+                    <el-button type="primary" @click="submitExpense">提交报销单</el-button>
                 </template>
+            </el-dialog>
+
+            <el-dialog v-model="previewDialog" width="70%" title="发票大图预览">
+                <img :src="previewImgUrl" style="width:100%;" alt="发票原图">
             </el-dialog>
 
             <el-dialog v-model="showApproveDialog" title="审批" width="400px">
@@ -160,8 +229,12 @@ app.component('page-approval', {
         const expenseForm = ref({
             expenseType: '',
             totalAmount: null,
-            description: ''
+            description: '',
+            details: [{ feeType: '', amount: '', expenseDate: '', fileList: [] }]
         });
+
+        const previewDialog = ref(false);
+        const previewImgUrl = ref('');
 
         const approveForm = ref({
             id: null,
@@ -213,20 +286,53 @@ app.component('page-approval', {
             }
         };
 
+        const addExpenseDetail = () => {
+            expenseForm.value.details.push({ feeType: '', amount: '', expenseDate: '', fileList: [] });
+        };
+
+        const delExpenseDetail = (idx) => {
+            expenseForm.value.details.splice(idx, 1);
+        };
+
+        const handleFileChange = (file, index) => {
+            const url = URL.createObjectURL(file.raw);
+            file.url = url;
+        };
+
+        const openImagePreview = (file) => {
+            previewImgUrl.value = file.url;
+            previewDialog.value = true;
+        };
+
         const submitExpense = async () => {
             if (!expenseForm.value.expenseType || !expenseForm.value.totalAmount) {
-                ElMessage.warning('请填写完整信息');
+                ElMessage.warning('请填写报销类型和总金额');
                 return;
             }
+            let hasDetail = false;
+            expenseForm.value.details.forEach(item => {
+                if (item.feeType && item.amount) hasDetail = true;
+            });
+            if (!hasDetail) {
+                ElMessage.warning('请至少填写一条报销明细');
+                return;
+            }
+            const details = expenseForm.value.details.filter(item => item.feeType && item.amount).map(item => ({
+                feeType: item.feeType,
+                amount: item.amount,
+                expenseDate: item.expenseDate,
+                remark: ''
+            }));
             try {
                 await axios.post('/api/expense', {
                     expenseType: expenseForm.value.expenseType,
                     totalAmount: expenseForm.value.totalAmount,
-                    description: expenseForm.value.description
+                    description: expenseForm.value.description,
+                    details: details
                 });
                 ElMessage.success('报销申请提交成功');
                 showExpenseDialog.value = false;
-                expenseForm.value = { expenseType: '', totalAmount: null, description: '' };
+                expenseForm.value = { expenseType: '', totalAmount: null, description: '', details: [{ feeType: '', amount: '', expenseDate: '', fileList: [] }] };
                 loadExpenseList();
             } catch (e) {
                 ElMessage.error('提交失败');
@@ -304,6 +410,8 @@ app.component('page-approval', {
             showOvertimeDialog,
             showExpenseDialog,
             showApproveDialog,
+            previewDialog,
+            previewImgUrl,
             overtimeForm,
             expenseForm,
             approveForm,
@@ -311,6 +419,10 @@ app.component('page-approval', {
             loadExpenseList,
             submitOvertime,
             submitExpense,
+            addExpenseDetail,
+            delExpenseDetail,
+            handleFileChange,
+            openImagePreview,
             approveOvertime,
             approveExpense,
             confirmApprove,

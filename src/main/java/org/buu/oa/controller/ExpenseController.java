@@ -38,6 +38,20 @@ public class ExpenseController {
         private java.math.BigDecimal totalAmount;
         /** 报销说明 */
         private String description;
+        /** 报销明细列表 */
+        private List<ExpenseDetail> details;
+    }
+
+    @Data
+    public static class ExpenseDetail {
+        /** 费用类型 */
+        private String feeType;
+        /** 金额 */
+        private java.math.BigDecimal amount;
+        /** 费用日期 */
+        private java.time.LocalDate expenseDate;
+        /** 备注 */
+        private String remark;
     }
 
     /**
@@ -71,7 +85,7 @@ public class ExpenseController {
         report.setTotalAmount(request.getTotalAmount());
         report.setDescription(request.getDescription());
         
-        ExpenseReport created = expenseReportService.create(report);
+        ExpenseReport created = expenseReportService.create(report, request.getDetails());
         return Result.success("报销申请提交成功", created);
     }
 

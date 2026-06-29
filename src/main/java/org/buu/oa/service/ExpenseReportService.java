@@ -17,7 +17,7 @@ public interface ExpenseReportService extends IService<ExpenseReport> {
      * @param report 报销实体
      * @return 创建后的报销
      */
-    ExpenseReport create(ExpenseReport report);
+    ExpenseReport create(ExpenseReport report, List<org.buu.oa.controller.ExpenseController.ExpenseDetail> details);
 
     /**
      * 审批费用报销
