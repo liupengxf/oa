@@ -10,4 +10,15 @@
         ORDER BY er.create_time DESC
     </select>
 
+    <select id="selectAllWithEmp" resultType="java.util.Map">
+        SELECT er.id, er.report_no as reportNo, e.name as empName, e.dept_id as deptId, d.dept_name as deptName,
+               er.expense_type as expenseType, er.total_amount as totalAmount, er.description, er.status,
+               CASE er.status WHEN 'PENDING' THEN '待审批' WHEN 'COMPLETED' THEN '已通过' WHEN 'REJECTED' THEN '已驳回' ELSE '未知' END as statusText,
+               er.create_time as createTime
+        FROM expense_report er
+        LEFT JOIN emp_employee e ON er.emp_id = e.id
+        LEFT JOIN sys_dept d ON e.dept_id = d.id
+        ORDER BY er.create_time DESC
+    </select>
+
 </mapper>

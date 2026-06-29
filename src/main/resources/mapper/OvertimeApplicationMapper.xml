@@ -10,4 +10,17 @@
         ORDER BY oa.create_time DESC
     </select>
 
+    <select id="selectAllWithEmp" resultType="java.util.Map">
+        SELECT oa.id, oa.overtime_no as overtimeNo, e.name as empName, e.dept_id as deptId, d.dept_name as deptName,
+               oa.overtime_type as overtimeType,
+               CASE oa.overtime_type WHEN 1 THEN '工作日加班' WHEN 2 THEN '周末加班' WHEN 3 THEN '节假日加班' ELSE '其他' END as overtimeTypeName,
+               oa.start_time as startTime, oa.end_time as endTime, oa.hours, oa.reason, oa.status,
+               CASE oa.status WHEN 'PENDING' THEN '待审批' WHEN 'COMPLETED' THEN '已通过' WHEN 'REJECTED' THEN '已驳回' ELSE '未知' END as statusText,
+               oa.create_time as createTime
+        FROM overtime_application oa
+        LEFT JOIN emp_employee e ON oa.emp_id = e.id
+        LEFT JOIN sys_dept d ON e.dept_id = d.id
+        ORDER BY oa.create_time DESC
+    </select>
+
 </mapper>

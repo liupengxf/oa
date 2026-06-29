@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.buu.oa.entity.OvertimeApplication;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 加班申请服务接口
@@ -40,4 +41,10 @@ public interface OvertimeApplicationService extends IService<OvertimeApplication
      * @return 加班记录列表
      */
     List<OvertimeApplication> getByEmpId(Long empId);
+
+    /**
+     * 查询所有加班申请（包含员工信息）
+     * @return 加班申请列表
+     */
+    List<Map<String, Object>> getAllWithEmp();
 }

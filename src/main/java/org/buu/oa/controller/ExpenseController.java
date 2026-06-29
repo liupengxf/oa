@@ -9,6 +9,7 @@ import org.buu.oa.service.AuthService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 报销控制器
@@ -111,6 +112,16 @@ public class ExpenseController {
             return Result.<List<ExpenseReport>>unauthorized("未登录");
         }
         List<ExpenseReport> list = expenseReportService.getByEmpId(user.getEmpId());
+        return Result.success(list);
+    }
+
+    /**
+     * 查询所有报销申请记录（包含员工信息）
+     * @return 所有报销申请列表
+     */
+    @GetMapping("/list")
+    public Result<List<Map<String, Object>>> getAllExpenses() {
+        List<Map<String, Object>> list = expenseReportService.getAllWithEmp();
         return Result.success(list);
     }
 }

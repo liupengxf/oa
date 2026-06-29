@@ -282,23 +282,7 @@
             `
         });
 
-        app.component('page-approval', {
-            template: `
-                <div class="approval-page">
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">审批管理</div>
-                    <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
-                        <el-table :data="[]" border stripe>
-                            <el-table-column prop="id" label="编号"></el-table-column>
-                            <el-table-column prop="type" label="类型"></el-table-column>
-                            <el-table-column prop="title" label="标题"></el-table-column>
-                            <el-table-column prop="status" label="状态"></el-table-column>
-                            <el-table-column prop="createTime" label="创建时间"></el-table-column>
-                        </el-table>
-                        <div style="text-align: center; padding: 40px; color: #999;">暂无审批记录</div>
-                    </div>
-                </div>
-            `
-        });
+        
 
         app.component('page-notice', {
             template: `
@@ -319,6 +303,7 @@
     <script src="js/pages/attendance.js"></script>
     <script src="js/pages/meeting.js"></script>
     <script src="js/pages/report.js"></script>
+    <script src="js/pages/approval.js"></script>
     <script>
         app.use(ElementPlus);
         app.mount('#app');

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.buu.oa.entity.ExpenseReport;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 费用报销服务接口
@@ -40,4 +41,10 @@ public interface ExpenseReportService extends IService<ExpenseReport> {
      * @return 报销记录列表
      */
     List<ExpenseReport> getByEmpId(Long empId);
+
+    /**
+     * 查询所有报销申请（包含员工信息）
+     * @return 报销申请列表
+     */
+    List<Map<String, Object>> getAllWithEmp();
 }

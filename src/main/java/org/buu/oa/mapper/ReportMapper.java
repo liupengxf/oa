@@ -88,4 +88,14 @@ public interface ReportMapper {
             "LEFT JOIN sys_dept d ON e.dept_id = d.id " +
             "ORDER BY r.create_time DESC")
     List<Map<String, Object>> selectExpenseAll();
+
+    @Select("SELECT o.overtime_no as overtimeNo, e.name as empName, d.dept_name as deptName, " +
+            "CASE o.overtime_type WHEN 1 THEN '工作日加班' WHEN 2 THEN '周末加班' WHEN 3 THEN '节假日加班' ELSE '其他' END as overtimeTypeName, " +
+            "o.start_time as startTime, o.end_time as endTime, o.hours, o.reason, " +
+            "CASE o.status WHEN 'PENDING' THEN '待审批' WHEN 'COMPLETED' THEN '已通过' WHEN 'REJECTED' THEN '已驳回' ELSE '未知' END as statusText " +
+            "FROM overtime_application o " +
+            "LEFT JOIN emp_employee e ON o.emp_id = e.id " +
+            "LEFT JOIN sys_dept d ON e.dept_id = d.id " +
+            "ORDER BY o.create_time DESC")
+    List<Map<String, Object>> selectOvertimeAll();
 }

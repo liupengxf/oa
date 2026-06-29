@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -105,5 +106,14 @@ public class ExpenseReportServiceImpl extends ServiceImpl<ExpenseReportMapper, E
         wrapper.eq(ExpenseReport::getEmpId, empId);
         wrapper.orderByDesc(ExpenseReport::getCreateTime);
         return baseMapper.selectList(wrapper);
+    }
+
+    /**
+     * 查询所有报销申请（包含员工信息）
+     * @return 报销申请列表
+     */
+    @Override
+    public List<Map<String, Object>> getAllWithEmp() {
+        return baseMapper.selectAllWithEmp();
     }
 }

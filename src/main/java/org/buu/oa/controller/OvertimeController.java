@@ -9,6 +9,7 @@ import org.buu.oa.service.AuthService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 加班控制器
@@ -120,6 +121,16 @@ public class OvertimeController {
             return Result.<List<OvertimeApplication>>unauthorized("未登录");
         }
         List<OvertimeApplication> list = overtimeApplicationService.getByEmpId(user.getEmpId());
+        return Result.success(list);
+    }
+
+    /**
+     * 查询所有加班申请记录（包含员工信息）
+     * @return 所有加班申请列表
+     */
+    @GetMapping("/list")
+    public Result<List<Map<String, Object>>> getAllOvertimes() {
+        List<Map<String, Object>> list = overtimeApplicationService.getAllWithEmp();
         return Result.success(list);
     }
 }
