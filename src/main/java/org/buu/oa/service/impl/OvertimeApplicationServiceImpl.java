@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -106,14 +105,5 @@ public class OvertimeApplicationServiceImpl extends ServiceImpl<OvertimeApplicat
         wrapper.eq(OvertimeApplication::getEmpId, empId);
         wrapper.orderByDesc(OvertimeApplication::getCreateTime);
         return baseMapper.selectList(wrapper);
-    }
-
-    /**
-     * 查询所有加班申请（包含员工信息）
-     * @return 加班申请列表
-     */
-    @Override
-    public List<Map<String, Object>> getAllWithEmp() {
-        return baseMapper.selectAllWithEmp();
     }
 }

@@ -18,9 +18,10 @@ app.component('page-approval', {
                     <div style="background: #fff; border-radius: 8px; padding: 20px;">
                         <el-table :data="overtimeList" border stripe>
                             <el-table-column prop="overtimeNo" label="加班单号" width="120"></el-table-column>
-                            <el-table-column prop="empName" label="员工姓名" width="100"></el-table-column>
-                            <el-table-column prop="deptName" label="部门" width="100"></el-table-column>
-                            <el-table-column prop="overtimeTypeName" label="加班类型" width="120"></el-table-column>
+                            <el-table-column prop="empId" label="员工ID" width="100"></el-table-column>
+                            <el-table-column label="加班类型" width="120">
+                                <template #default="scope">{{ getOvertimeTypeName(scope.row.overtimeType) }}</template>
+                            </el-table-column>
                             <el-table-column prop="startTime" label="开始时间" width="180">
                                 <template #default="scope">{{ formatDateTime(scope.row.startTime) }}</template>
                             </el-table-column>
@@ -29,9 +30,9 @@ app.component('page-approval', {
                             </el-table-column>
                             <el-table-column prop="hours" label="时长(小时)" width="100"></el-table-column>
                             <el-table-column prop="reason" label="原因" min-width="150"></el-table-column>
-                            <el-table-column prop="statusText" label="状态" width="100">
+                            <el-table-column prop="status" label="状态" width="100">
                                 <template #default="scope">
-                                    <el-tag :type="getStatusType(scope.row.status)">{{ scope.row.statusText }}</el-tag>
+                                    <el-tag :type="getStatusType(scope.row.status)">{{ getStatusText(scope.row.status) }}</el-tag>
                                 </template>
                             </el-table-column>
                             <el-table-column prop="createTime" label="创建时间" width="180">
@@ -51,16 +52,15 @@ app.component('page-approval', {
                     <div style="background: #fff; border-radius: 8px; padding: 20px;">
                         <el-table :data="expenseList" border stripe>
                             <el-table-column prop="reportNo" label="报销单号" width="120"></el-table-column>
-                            <el-table-column prop="empName" label="员工姓名" width="100"></el-table-column>
-                            <el-table-column prop="deptName" label="部门" width="100"></el-table-column>
-                            <el-table-column prop="expenseType" label="报销类型" width="100"></el-table-column>
-                            <el-table-column prop="totalAmount" label="金额" width="100">
+                            <el-table-column prop="empId" label="员工ID" width="100"></el-table-column>
+                            <el-table-column prop="expenseType" label="报销类型" width="120"></el-table-column>
+                            <el-table-column prop="totalAmount" label="总金额" width="100">
                                 <template #default="scope">¥{{ scope.row.totalAmount }}</template>
                             </el-table-column>
-                            <el-table-column prop="description" label="说明" min-width="200"></el-table-column>
-                            <el-table-column prop="statusText" label="状态" width="100">
+                            <el-table-column prop="description" label="事由" min-width="150"></el-table-column>
+                            <el-table-column prop="status" label="状态" width="100">
                                 <template #default="scope">
-                                    <el-tag :type="getStatusType(scope.row.status)">{{ scope.row.statusText }}</el-tag>
+                                    <el-tag :type="getStatusType(scope.row.status)">{{ getStatusText(scope.row.status) }}</el-tag>
                                 </template>
                             </el-table-column>
                             <el-table-column prop="createTime" label="创建时间" width="180">
@@ -78,12 +78,12 @@ app.component('page-approval', {
             </el-tabs>
 
             <el-dialog v-model="showOvertimeDialog" title="加班申请" width="500px">
-                <el-form :model="overtimeForm" label-width="100px">
+                <el-form :model="overtimeForm" label-width="80px">
                     <el-form-item label="加班类型">
-                        <el-select v-model="overtimeForm.overtimeType" placeholder="请选择加班类型">
-                            <el-option :label="'工作日加班'" :value="1"></el-option>
-                            <el-option :label="'周末加班'" :value="2"></el-option>
-                            <el-option :label="'节假日加班'" :value="3"></el-option>
+                        <el-select v-model="overtimeForm.overtimeType" placeholder="请选择加班类型" clearable>
+                            <el-option label="工作日加班" :value="1"></el-option>
+                            <el-option label="周末加班" :value="2"></el-option>
+                            <el-option label="节假日加班" :value="3"></el-option>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="开始时间">
@@ -102,12 +102,12 @@ app.component('page-approval', {
                 </template>
             </el-dialog>
 
-            <el-dialog v-model="showExpenseDialog" title="报销申请" width="800px">
+            <el-dialog v-model="showExpenseDialog" title="报销申请" width="850px">
                 <div style="padding: 10px;">
                     <el-row :gutter="20">
                         <el-col span="8">
                             <el-form-item label="报销类型" label-width="80px">
-                                <el-select v-model="expenseForm.expenseType" placeholder="请选择" clearable>
+                                <el-select v-model="expenseForm.expenseType" placeholder="请选择报销类型" clearable>
                                     <el-option label="差旅费" value="差旅费"></el-option>
                                     <el-option label="交通费" value="交通费"></el-option>
                                     <el-option label="餐饮费" value="餐饮费"></el-option>
@@ -139,7 +139,7 @@ app.component('page-approval', {
                             <el-row :gutter="16">
                                 <el-col span="5">
                                     <el-form-item label="费用类型" label-width="70px">
-                                        <el-select v-model="item.feeType" placeholder="选择" clearable>
+                                        <el-select v-model="item.feeType" placeholder="选择费用类型" clearable>
                                             <el-option label="交通" value="交通"></el-option>
                                             <el-option label="住宿" value="住宿"></el-option>
                                             <el-option label="餐饮" value="餐饮"></el-option>
@@ -299,17 +299,20 @@ app.component('page-approval', {
             expenseForm.value.details.push({ feeType: '', amount: '', expenseDate: '', fileList: [] });
         };
 
-        const delExpenseDetail = (idx) => {
-            expenseForm.value.details.splice(idx, 1);
+        const delExpenseDetail = (index) => {
+            if (expenseForm.value.details.length === 1) {
+                ElMessage.warning('至少保留一条明细');
+                return;
+            }
+            expenseForm.value.details.splice(index, 1);
         };
 
         const handleFileChange = (file, index) => {
-            const url = URL.createObjectURL(file.raw);
-            file.url = url;
+            console.log('文件变化', file, index);
         };
 
         const openImagePreview = (file) => {
-            previewImgUrl.value = file.url;
+            previewImgUrl.value = file.url || file.raw ? URL.createObjectURL(file.raw) : '';
             previewDialog.value = true;
         };
 
@@ -318,34 +321,33 @@ app.component('page-approval', {
                 ElMessage.warning('请选择报销类型');
                 return;
             }
-            if (totalAmount.value <= 0) {
-                ElMessage.warning('请填写有效的报销金额');
+            if (!expenseForm.value.description) {
+                ElMessage.warning('请填写报销事由');
                 return;
             }
-            let hasDetail = false;
-            expenseForm.value.details.forEach(item => {
-                if (item.feeType && item.amount) hasDetail = true;
-            });
-            if (!hasDetail) {
-                ElMessage.warning('请至少填写一条报销明细');
+            const validDetails = expenseForm.value.details.filter(item => item.feeType && item.amount);
+            if (validDetails.length === 0) {
+                ElMessage.warning('请至少填写一条有效的报销明细');
                 return;
             }
-            const details = expenseForm.value.details.filter(item => item.feeType && item.amount).map(item => ({
-                feeType: item.feeType,
-                amount: item.amount,
-                expenseDate: item.expenseDate,
-                remark: ''
-            }));
             try {
                 await axios.post('/api/expense', {
                     expenseType: expenseForm.value.expenseType,
                     totalAmount: totalAmount.value,
                     description: expenseForm.value.description,
-                    details: details
+                    details: expenseForm.value.details.map(item => ({
+                        feeType: item.feeType,
+                        amount: item.amount,
+                        expenseDate: item.expenseDate
+                    }))
                 });
                 ElMessage.success('报销申请提交成功');
                 showExpenseDialog.value = false;
-                expenseForm.value = { expenseType: '', description: '', details: [{ feeType: '', amount: '', expenseDate: '', fileList: [] }] };
+                expenseForm.value = {
+                    expenseType: '',
+                    description: '',
+                    details: [{ feeType: '', amount: '', expenseDate: '', fileList: [] }]
+                };
                 loadExpenseList();
             } catch (e) {
                 ElMessage.error('提交失败');
@@ -374,13 +376,14 @@ app.component('page-approval', {
 
         const confirmApprove = async () => {
             try {
-                const url = approveForm.value.type === 'overtime' ? '/api/overtime/approve' : '/api/expense/approve';
-                await axios.post(url, {
-                    id: approveForm.value.id,
+                const url = approveForm.value.type === 'overtime' 
+                    ? `/api/overtime/${approveForm.value.id}/approve` 
+                    : `/api/expense/${approveForm.value.id}/approve`;
+                await axios.put(url, {
                     result: approveForm.value.result,
                     opinion: approveForm.value.opinion
                 });
-                ElMessage.success(approveForm.value.result === 1 ? '审批通过' : '审批驳回');
+                ElMessage.success('审批成功');
                 showApproveDialog.value = false;
                 if (approveForm.value.type === 'overtime') {
                     loadOvertimeList();
@@ -392,23 +395,44 @@ app.component('page-approval', {
             }
         };
 
+        const getStatusType = (status) => {
+            const types = {
+                'PENDING': 'warning',
+                'APPROVED': 'success',
+                'REJECTED': 'danger'
+            };
+            return types[status] || 'info';
+        };
+
+        const getStatusText = (status) => {
+            const texts = {
+                'PENDING': '待审批',
+                'APPROVED': '已通过',
+                'REJECTED': '已驳回'
+            };
+            return texts[status] || status;
+        };
+
+        const getOvertimeTypeName = (type) => {
+            const types = {
+                1: '工作日加班',
+                2: '周末加班',
+                3: '节假日加班'
+            };
+            return types[type] || type;
+        };
+
         const formatDateTime = (dateTime) => {
-            if (!dateTime) return '';
-            const d = new Date(dateTime);
-            return d.toLocaleString('zh-CN', {
+            if (!dateTime) return '-';
+            const date = new Date(dateTime);
+            return date.toLocaleString('zh-CN', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                second: '2-digit'
             });
-        };
-
-        const getStatusType = (status) => {
-            if (status === 'PENDING') return 'warning';
-            if (status === 'COMPLETED') return 'success';
-            if (status === 'REJECTED') return 'danger';
-            return 'info';
         };
 
         onMounted(() => {
@@ -423,25 +447,25 @@ app.component('page-approval', {
             showOvertimeDialog,
             showExpenseDialog,
             showApproveDialog,
-            previewDialog,
-            previewImgUrl,
-            totalAmount,
             overtimeForm,
             expenseForm,
             approveForm,
-            loadOvertimeList,
-            loadExpenseList,
+            totalAmount,
+            previewDialog,
+            previewImgUrl,
             submitOvertime,
-            submitExpense,
             addExpenseDetail,
             delExpenseDetail,
             handleFileChange,
             openImagePreview,
+            submitExpense,
             approveOvertime,
             approveExpense,
             confirmApprove,
-            formatDateTime,
-            getStatusType
+            getStatusType,
+            getStatusText,
+            getOvertimeTypeName,
+            formatDateTime
         };
     }
 });

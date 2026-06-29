@@ -2,12 +2,9 @@ package org.buu.oa.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.buu.oa.controller.ExpenseController;
 import org.buu.oa.entity.ApprovalRecord;
 import org.buu.oa.entity.ExpenseReport;
-import org.buu.oa.entity.ExpenseReportItem;
 import org.buu.oa.mapper.ApprovalRecordMapper;
-import org.buu.oa.mapper.ExpenseReportItemMapper;
 import org.buu.oa.mapper.ExpenseReportMapper;
 import org.buu.oa.service.ExpenseReportService;
 import org.springframework.stereotype.Service;
@@ -16,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -27,46 +23,28 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ExpenseReportServiceImpl extends ServiceImpl<ExpenseReportMapper, ExpenseReport> implements ExpenseReportService {
 
     private final ApprovalRecordMapper approvalRecordMapper;
-    private final ExpenseReportItemMapper expenseReportItemMapper;
     /** 序列号生成器，用于生成报销单号 */
     private final AtomicLong sequence = new AtomicLong(1);
 
-    public ExpenseReportServiceImpl(ApprovalRecordMapper approvalRecordMapper, ExpenseReportItemMapper expenseReportItemMapper) {
+    public ExpenseReportServiceImpl(ApprovalRecordMapper approvalRecordMapper) {
         this.approvalRecordMapper = approvalRecordMapper;
-        this.expenseReportItemMapper = expenseReportItemMapper;
     }
 
     /**
      * 创建费用报销
      * 生成唯一的报销单号，设置状态为待审批
      * @param report 报销实体
-     * @param details 报销明细列表
      * @return 创建后的报销
      */
     @Override
     @Transactional
-    public ExpenseReport create(ExpenseReport report, List<ExpenseController.ExpenseDetail> details) {
+    public ExpenseReport create(ExpenseReport report) {
         // 生成报销单号：BX + 年月日 + 3位序列号
         String no = "BX" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + 
                      String.format("%03d", sequence.getAndIncrement());
         report.setReportNo(no);
         report.setStatus("PENDING");  // 设置为待审批状态
         baseMapper.insert(report);
-        
-        if (details != null && !details.isEmpty()) {
-            for (ExpenseController.ExpenseDetail detail : details) {
-                if (detail.getFeeType() != null && detail.getAmount() != null) {
-                    ExpenseReportItem item = new ExpenseReportItem();
-                    item.setReportId(report.getId());
-                    item.setItemName(detail.getFeeType());
-                    item.setAmount(detail.getAmount());
-                    item.setExpenseDate(detail.getExpenseDate());
-                    item.setRemark(detail.getRemark());
-                    expenseReportItemMapper.insert(item);
-                }
-            }
-        }
-        
         return report;
     }
 
@@ -127,14 +105,5 @@ public class ExpenseReportServiceImpl extends ServiceImpl<ExpenseReportMapper, E
         wrapper.eq(ExpenseReport::getEmpId, empId);
         wrapper.orderByDesc(ExpenseReport::getCreateTime);
         return baseMapper.selectList(wrapper);
-    }
-
-    /**
-     * 查询所有报销申请（包含员工信息）
-     * @return 报销申请列表
-     */
-    @Override
-    public List<Map<String, Object>> getAllWithEmp() {
-        return baseMapper.selectAllWithEmp();
     }
 }

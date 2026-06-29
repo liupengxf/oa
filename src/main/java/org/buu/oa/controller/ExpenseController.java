@@ -9,7 +9,6 @@ import org.buu.oa.service.AuthService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 报销控制器
@@ -38,20 +37,6 @@ public class ExpenseController {
         private java.math.BigDecimal totalAmount;
         /** 报销说明 */
         private String description;
-        /** 报销明细列表 */
-        private List<ExpenseDetail> details;
-    }
-
-    @Data
-    public static class ExpenseDetail {
-        /** 费用类型 */
-        private String feeType;
-        /** 金额 */
-        private java.math.BigDecimal amount;
-        /** 费用日期 */
-        private java.time.LocalDate expenseDate;
-        /** 备注 */
-        private String remark;
     }
 
     /**
@@ -85,7 +70,7 @@ public class ExpenseController {
         report.setTotalAmount(request.getTotalAmount());
         report.setDescription(request.getDescription());
         
-        ExpenseReport created = expenseReportService.create(report, request.getDetails());
+        ExpenseReport created = expenseReportService.create(report);
         return Result.success("报销申请提交成功", created);
     }
 
@@ -130,12 +115,12 @@ public class ExpenseController {
     }
 
     /**
-     * 查询所有报销申请记录（包含员工信息）
-     * @return 所有报销申请列表
+     * 查询所有报销申请列表
+     * @return 报销申请列表
      */
     @GetMapping("/list")
-    public Result<List<Map<String, Object>>> getAllExpenses() {
-        List<Map<String, Object>> list = expenseReportService.getAllWithEmp();
+    public Result<List<ExpenseReport>> list() {
+        List<ExpenseReport> list = expenseReportService.list();
         return Result.success(list);
     }
 }

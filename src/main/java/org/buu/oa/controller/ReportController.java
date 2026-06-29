@@ -9,7 +9,6 @@ import org.buu.oa.service.ReportService;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -155,18 +154,6 @@ public class ReportController {
                 )).toList());
     }
 
-    @GetMapping("/test/leave-list")
-    public Result<List<Map<String, Object>>> testLeaveList() {
-        List<Map<String, Object>> data = reportService.getLeaveList();
-        return Result.success(data);
-    }
-
-    @GetMapping("/test/expense-list")
-    public Result<List<Map<String, Object>>> testExpenseList() {
-        List<Map<String, Object>> data = reportService.getExpenseList();
-        return Result.success(data);
-    }
-
     @GetMapping("/export/comprehensive")
     public void exportComprehensiveReport(HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -174,67 +161,49 @@ public class ReportController {
         String fileName = URLEncoder.encode("综合报表_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")), StandardCharsets.UTF_8).replace("+", "%20");
         response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
         
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
         
-        try {
-            ExcelWriter excelWriter = EasyExcel.write(outputStream).build();
-            
-            List<Map<String, Object>> deptData = reportService.getDeptEmpCount();
-            WriteSheet deptSheet = EasyExcel.writerSheet(0, "部门人数").build();
-            List<List<Object>> deptRows = new java.util.ArrayList<>();
-            deptRows.add(List.of("部门名称", "人数"));
-            for (Map<String, Object> row : deptData) {
-                List<Object> rowData = new java.util.ArrayList<>();
-                rowData.add(row.get("deptName") != null ? row.get("deptName").toString() : "");
-                rowData.add(row.get("empCount") != null ? row.get("empCount") : 0);
-                deptRows.add(rowData);
-            }
-            excelWriter.write(deptRows, deptSheet);
-            
-            List<Map<String, Object>> leaveData = reportService.getLeaveList();
-            WriteSheet leaveSheet = EasyExcel.writerSheet(1, "请假数据").build();
-            List<List<Object>> leaveRows = new java.util.ArrayList<>();
-            leaveRows.add(List.of("员工姓名", "部门", "请假类型", "开始日期", "结束日期", "原因", "状态"));
-            for (Map<String, Object> row : leaveData) {
-                List<Object> rowData = new java.util.ArrayList<>();
-                rowData.add(row.get("empName") != null ? row.get("empName").toString() : "");
-                rowData.add(row.get("deptName") != null ? row.get("deptName").toString() : "");
-                rowData.add(row.get("leaveTypeName") != null ? row.get("leaveTypeName").toString() : "");
-                rowData.add(row.get("startDate") != null ? row.get("startDate").toString() : "");
-                rowData.add(row.get("endDate") != null ? row.get("endDate").toString() : "");
-                rowData.add(row.get("reason") != null ? row.get("reason").toString() : "");
-                rowData.add(row.get("statusText") != null ? row.get("statusText").toString() : "");
-                leaveRows.add(rowData);
-            }
-            excelWriter.write(leaveRows, leaveSheet);
-            
-            List<Map<String, Object>> expenseData = reportService.getExpenseList();
-            WriteSheet expenseSheet = EasyExcel.writerSheet(2, "报销数据").build();
-            List<List<Object>> expenseRows = new java.util.ArrayList<>();
-            expenseRows.add(List.of("报销单号", "员工姓名", "部门", "金额", "类型", "说明", "状态", "时间"));
-            for (Map<String, Object> row : expenseData) {
-                List<Object> rowData = new java.util.ArrayList<>();
-                rowData.add(row.get("reportNo") != null ? row.get("reportNo").toString() : "");
-                rowData.add(row.get("empName") != null ? row.get("empName").toString() : "");
-                rowData.add(row.get("deptName") != null ? row.get("deptName").toString() : "");
-                rowData.add(row.get("totalAmount") != null ? row.get("totalAmount") : 0);
-                rowData.add(row.get("expenseType") != null ? row.get("expenseType").toString() : "");
-                rowData.add(row.get("description") != null ? row.get("description").toString() : "");
-                rowData.add(row.get("statusText") != null ? row.get("statusText").toString() : "");
-                rowData.add(row.get("createTime") != null ? row.get("createTime").toString() : "");
-                expenseRows.add(rowData);
-            }
-            excelWriter.write(expenseRows, expenseSheet);
-            
-            excelWriter.finish();
-            
-            byte[] bytes = outputStream.toByteArray();
-            response.setContentLength(bytes.length);
-            response.getOutputStream().write(bytes);
-            response.getOutputStream().flush();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new IOException("导出失败: " + e.getMessage(), e);
-        }
+        WriteSheet deptSheet = EasyExcel.writerSheet(0, "部门人数")
+                .head(List.of(List.of("部门名称", "员工人数")))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .build();
+        List<Map<String, Object>> deptData = reportService.getDeptEmpCount();
+        excelWriter.write(deptData.stream().map(row -> List.of(
+                row.get("deptName"),
+                row.get("empCount")
+        )).toList(), deptSheet);
+        
+        WriteSheet leaveSheet = EasyExcel.writerSheet(1, "请假数据")
+                .head(List.of(List.of("员工姓名", "部门", "请假类型", "开始日期", "结束日期", "请假原因", "状态")))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .build();
+        List<Map<String, Object>> leaveData = reportService.getLeaveList();
+        excelWriter.write(leaveData.stream().map(row -> List.of(
+                row.get("empName"),
+                row.get("deptName"),
+                row.get("leaveTypeName"),
+                row.get("startDate"),
+                row.get("endDate"),
+                row.get("reason"),
+                row.get("statusText")
+        )).toList(), leaveSheet);
+        
+        WriteSheet expenseSheet = EasyExcel.writerSheet(2, "报销数据")
+                .head(List.of(List.of("报销单号", "员工姓名", "部门", "报销金额", "费用类型", "报销说明", "状态", "提交时间")))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .build();
+        List<Map<String, Object>> expenseData = reportService.getExpenseList();
+        excelWriter.write(expenseData.stream().map(row -> List.of(
+                row.get("reportNo"),
+                row.get("empName"),
+                row.get("deptName"),
+                row.get("totalAmount"),
+                row.get("expenseType"),
+                row.get("description"),
+                row.get("statusText"),
+                row.get("createTime")
+        )).toList(), expenseSheet);
+        
+        excelWriter.finish();
     }
 }
