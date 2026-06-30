@@ -1,4 +1,4 @@
-app.component('page-approval', {
+const ApprovalPage = {
     template: `
         <div class="approval-page">
             <div class="page-header">
@@ -468,4 +468,6 @@ app.component('page-approval', {
             formatDateTime
         };
     }
-});
+};
+
+app.component('page-approval', ApprovalPage);
