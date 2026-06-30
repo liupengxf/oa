@@ -164,7 +164,7 @@
                 </div>
                 
                 <div class="content-area">
-                    <component :is="currentComponent"></component>
+                    <component :is="currentComponent" :key="currentMenu"></component>
                 </div>
             </div>
         </div>
@@ -258,6 +258,47 @@
             }
         });
 
+
+        app.component('page-dashboard', {
+            template: `
+                <div class="dashboard-page">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">欢迎来到工作台</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 14px; color: #666;">今日待办</div>
+                            <div style="font-size: 32px; font-weight: 600; color: #333; margin-top: 10px;">5</div>
+                        </div>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 14px; color: #666;">待审批</div>
+                            <div style="font-size: 32px; font-weight: 600; color: #333; margin-top: 10px;">3</div>
+                        </div>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 14px; color: #666;">新通知</div>
+                            <div style="font-size: 32px; font-weight: 600; color: #333; margin-top: 10px;">2</div>
+                        </div>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 14px; color: #666;">本月考勤</div>
+                            <div style="font-size: 32px; font-weight: 600; color: #333; margin-top: 10px;">22天</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px;">
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 15px;">考勤统计图表</div>
+                            <div style="height: 300px; display: flex; align-items: center; justify-content: center; color: #999;">图表区域</div>
+                        </div>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 15px;">最近通知</div>
+                            <el-timeline>
+                                <el-timeline-item>新的审批任务</el-timeline-item>
+                                <el-timeline-item>考勤异常提醒</el-timeline-item>
+                                <el-timeline-item>系统维护通知</el-timeline-item>
+                            </el-timeline>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+
         app.component('page-notice', {
             template: `
                 <div class="notice-page">
@@ -272,7 +313,6 @@
                 </div>
             `
         });
-
     </script>
     <script src="js/pages/dashboard.js"></script>
     <script src="js/pages/attendance.js"></script>
