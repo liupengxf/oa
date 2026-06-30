@@ -113,4 +113,14 @@ public class ExpenseController {
         List<ExpenseReport> list = expenseReportService.getByEmpId(user.getEmpId());
         return Result.success(list);
     }
+
+    /**
+     * 查询所有报销申请列表
+     * @return 报销申请列表
+     */
+    @GetMapping("/list")
+    public Result<List<ExpenseReport>> list() {
+        List<ExpenseReport> list = expenseReportService.list();
+        return Result.success(list);
+    }
 }

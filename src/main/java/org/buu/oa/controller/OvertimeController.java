@@ -122,4 +122,14 @@ public class OvertimeController {
         List<OvertimeApplication> list = overtimeApplicationService.getByEmpId(user.getEmpId());
         return Result.success(list);
     }
+
+    /**
+     * 查询所有加班申请列表
+     * @return 加班申请列表
+     */
+    @GetMapping("/list")
+    public Result<List<OvertimeApplication>> list() {
+        List<OvertimeApplication> list = overtimeApplicationService.list();
+        return Result.success(list);
+    }
 }

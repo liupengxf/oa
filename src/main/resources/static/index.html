@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OA协同办公平台</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.6.1/dist/index.full.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.6.1/dist/index.css">
+    <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus@2.4.4/dist/index.full.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus@2.4.4/dist/index.css">
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.8/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <style>
@@ -115,6 +115,18 @@
         .chart-header { margin-bottom: 15px; }
         .chart-header h3 { font-size: 16px; color: #333; font-weight: 600; }
         .chart-container { height: 350px; }
+
+        .el-select { width: 100% !important; }
+        .el-select .el-input__inner { color: #333 !important; line-height: 28px !important; }
+        .el-select .el-select__placeholder { color: #999 !important; line-height: 28px !important; }
+        .el-select .el-select__tags-text { color: #333 !important; line-height: 28px !important; }
+        .el-select .el-tag__content { color: #333 !important; }
+        .el-select .el-input__wrapper { background-color: #ffffff !important; }
+        .el-dialog .el-select { width: 100% !important; }
+        .el-dialog .el-select .el-input__inner { color: #333 !important; }
+        .el-dialog .el-select .el-select__placeholder { color: #999 !important; }
+        .el-input__inner { color: #333 !important; }
+        .el-input__placeholder { color: #999 !important; }
     </style>
 </head>
 <body>
@@ -319,6 +331,7 @@
     <script src="js/pages/attendance.js"></script>
     <script src="js/pages/meeting.js"></script>
     <script src="js/pages/report.js"></script>
+    <script src="js/pages/approval.js"></script>
     <script>
         app.use(ElementPlus);
         app.mount('#app');
