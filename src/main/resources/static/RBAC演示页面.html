@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OA系统 RBAC权限体系演示</title>
+    <!-- 引入Vue3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入Element Plus -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/element-plus/dist/locale/zh-cn.js"></script>
+    <!-- 引入Element Plus图标 -->
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: #f0f2f5;
+        }
+        /* 整体布局 */
+        .layout {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        /* 顶部头部 */
+        .header {
+            height: 60px;
+            background: #001529;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            justify-content: space-between;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .role-select-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+        /* 主体布局 */
+        .main-wrap {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        /* 侧边栏 */
+        .sidebar {
+            width: 220px;
+            background: #001529;
+            overflow-y: auto;
+        }
+        .menu-item {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            color: rgba(255,255,255,0.65);
+            cursor: pointer;
+            transition: all .2s;
+            gap: 10px;
+            font-size: 14px;
+            border-left: 3px solid transparent;
+        }
+        .menu-item:hover {
+            color: #fff;
+            background: rgba(24,144,255,0.2);
+        }
+        .menu-item.active {
+            color: #1890ff;
+            background: rgba(24,144,255,0.15);
+            border-left-color: #1890ff;
+        }
+        /* 内容区 */
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #262626;
+            margin-bottom: 20px;
+        }
+        .tip-card {
+            margin-bottom: 20px;
+            background: #f6ffed;
+            border-color: #b7eb8f;
+            color: #389e0d;
+        }
+        .section-card {
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #303133;
+        }
+        .permission-desc {
+            font-size: 13px;
+            color: #606266;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        .btn-group {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+        }
+        .role-perm-table {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="layout">
+        <!-- 顶部头部 -->
+        <div class="header">
+            <div class="header-title">
+                <el-icon :size="22"><OfficeBuilding /></el-icon>
+                OA协同办公平台 - RBAC权限体系演示
+            </div>
+            <div class="role-select-wrap">
+                <span>当前角色：</span>
+                <el-select v-model="currentRole" style="width: 160px" @change="onRoleChange">
+                    <el-option label="普通员工" :value="2"></el-option>
+                    <el-option label="部门经理" :value="3"></el-option>
+                    <el-option label="HR管理员" :value="4"></el-option>
+                    <el-option label="财务管理员" :value="5"></el-option>
+                    <el-option label="超级管理员" :value="1"></el-option>
+                </el-select>
+            </div>
+        </div>
+
+        <div class="main-wrap">
+            <!-- 左侧菜单：根据角色动态渲染 -->
+            <aside class="sidebar">
+                <div
+                    v-for="menu in currentMenus"
+                    :key="menu.id"
+                    class="menu-item"
+                    :class="{ active: activeMenu === menu.path }"
+                    @click="activeMenu = menu.path"
+                >
+                    <el-icon><component :is="menu.icon" /></el-icon>
+                    <span>{{ menu.menuName }}</span>
+                </div>
+            </aside>
+
+            <!-- 右侧内容区 -->
+            <main class="content">
+                <div class="page-title">🔐 权限控制演示页</div>
+
+                <!-- 说明卡片 -->
+                <el-card class="tip-card" shadow="never">
+                    <strong>演示说明：</strong>本页面为纯前端模拟RBAC权限效果。切换右上角角色，左侧侧边栏菜单会动态变化（无权限的菜单不显示）；下方员工列表的操作按钮也会根据角色权限显隐，对应数据库中「用户-角色-菜单」五表关联的权限模型。
+                </el-card>
+
+                <!-- 按钮级权限演示 -->
+                <el-card class="section-card" shadow="never">
+                    <template #header>
+                        <div class="card-title">📋 按钮级权限演示（员工列表）</div>
+                    </template>
+
+                    <div class="permission-desc">
+                        权限规则：超级管理员 → 全部操作权限；部门经理 → 编辑、查看；HR → 新增、查看；财务 → 仅查看；普通员工 → 仅查看
+                    </div>
+
+                    <div class="btn-group">
+                        <el-button v-if="hasPerm('user:add')" type="primary">
+                            <el-icon><Plus /></el-icon> 新增员工
+                        </el-button>
+                        <el-button v-if="hasPerm('user:edit')" type="warning">
+                            <el-icon><Edit /></el-icon> 编辑
+                        </el-button>
+                        <el-button v-if="hasPerm('user:delete')" type="danger">
+                            <el-icon><Delete /></el-icon> 删除
+                        </el-button>
+                        <el-button type="info">
+                            <el-icon><View /></el-icon> 查看详情
+                        </el-button>
+                    </div>
+
+                    <el-table :data="employeeList" border stripe>
+                        <el-table-column prop="empNo" label="工号" width="120"></el-table-column>
+                        <el-table-column prop="name" label="姓名" width="100"></el-table-column>
+                        <el-table-column prop="dept" label="部门" width="120"></el-table-column>
+                        <el-table-column prop="position" label="职位"></el-table-column>
+                        <el-table-column prop="entryDate" label="入职日期" width="140"></el-table-column>
+                        <el-table-column label="状态" width="100">
+                            <template #default="scope">
+                                <el-tag type="success">{{ scope.row.status }}</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="180" fixed="right">
+                            <template #default="scope">
+                                <el-button v-if="hasPerm('user:edit')" type="primary" size="small" text>编辑</el-button>
+                                <el-button v-if="hasPerm('user:delete')" type="danger" size="small" text>删除</el-button>
+                                <el-button type="primary" size="small" text>查看</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-card>
+
+                <!-- 权限对照表 -->
+                <el-card class="section-card role-perm-table" shadow="never">
+                    <template #header>
+                        <div class="card-title">📊 角色-菜单权限对照表（与数据库一致）</div>
+                    </template>
+                    <el-table :data="rolePermTable" border>
+                        <el-table-column prop="roleName" label="角色" width="140"></el-table-column>
+                        <el-table-column prop="menus" label="拥有菜单权限"></el-table-column>
+                        <el-table-column prop="buttonPerm" label="按钮权限范围"></el-table-column>
+                    </el-table>
+                </el-card>
+            </main>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, computed } = Vue;
+
+    const app = createApp({
+        setup() {
+            // 当前角色ID：1超级管理员 2普通员工 3部门经理 4HR 5财务
+            const currentRole = ref(2);
+            const activeMenu = ref('/dashboard');
+
+            // 完整菜单数据（对应数据库sys_menu表）
+            const allMenus = [
+                { id: 1, parentId: 0, menuName: '工作台', path: '/dashboard', icon: 'DataBoard', perms: '' },
+                { id: 2, parentId: 0, menuName: '考勤日历', path: '/attendance', icon: 'Calendar', perms: '' },
+                { id: 3, parentId: 0, menuName: '审批流', path: '/approval', icon: 'Document', perms: '' },
+                { id: 4, parentId: 0, menuName: '通知中心', path: '/notice', icon: 'Bell', perms: '' },
+                { id: 5, parentId: 0, menuName: '数据看板', path: '/report', icon: 'DataAnalysis', perms: '' }
+            ];
+
+            // 角色-菜单权限映射（对应数据库sys_role_menu表）
+            const roleMenuMap = {
+                1: [1,2,3,4,5], // 超级管理员：全部菜单
+                2: [1,2,4],     // 普通员工：工作台、考勤日历、通知中心
+                3: [1,2,3,4],   // 部门经理：工作台、考勤日历、审批流、通知中心
+                4: [1,2,4,5],   // HR：工作台、考勤日历、通知中心、数据看板
+                5: [1,3,4,5]    // 财务：工作台、审批流、通知中心、数据看板
+            };
+
+            // 角色-按钮权限映射
+            const roleButtonPermMap = {
+                1: ['user:add', 'user:edit', 'user:delete'],
+                2: [],
+                3: ['user:edit'],
+                4: ['user:add'],
+                5: []
+            };
+
+            // 当前角色拥有的菜单（计算属性：动态过滤）
+            const currentMenus = computed(() => {
+                const menuIds = roleMenuMap[currentRole.value] || [];
+                return allMenus.filter(menu => menuIds.includes(menu.id));
+            });
+
+            // 权限校验方法：判断是否拥有指定按钮权限
+            const hasPerm = (perm) => {
+                const perms = roleButtonPermMap[currentRole.value] || [];
+                return perms.includes(perm);
+            };
+
+            // 角色切换提示
+            const onRoleChange = (val) => {
+                const roleNameMap = {
+                    1: '超级管理员',
+                    2: '普通员工',
+                    3: '部门经理',
+                    4: 'HR管理员',
+                    5: '财务管理员'
+                };
+                ElementPlus.ElMessage.success(`已切换为【${roleNameMap[val]}】，菜单与按钮权限已同步更新`);
+                // 切换角色后重置激活菜单为第一个有权限的菜单
+                if (currentMenus.value.length > 0) {
+                    activeMenu.value = currentMenus.value[0].path;
+                }
+            };
+
+            // 模拟员工列表数据
+            const employeeList = [
+                { empNo: 'E2024001', name: '张三', dept: '研发部', position: 'Java工程师', entryDate: '2024-03-01', status: '在职' },
+                { empNo: 'E2024002', name: '李四', dept: '市场部', position: '销售经理', entryDate: '2023-06-15', status: '在职' },
+                { empNo: 'E2024003', name: '王五', dept: '产品部', position: '产品经理', entryDate: '2024-01-10', status: '在职' },
+                { empNo: 'E2024004', name: '赵六', dept: '财务部', position: '财务主管', entryDate: '2022-09-01', status: '在职' },
+                { empNo: 'E2024005', name: '孙七', dept: '人事部', position: 'HRBP', entryDate: '2023-12-01', status: '试用期' }
+            ];
+
+            // 权限对照表数据
+            const rolePermTable = [
+                { roleName: '超级管理员', menus: '工作台、考勤日历、审批流、通知中心、数据看板（全部）', buttonPerm: '新增、编辑、删除、查看（全部操作）' },
+                { roleName: '普通员工', menus: '工作台、考勤日历、通知中心', buttonPerm: '仅查看，无数据操作权限' },
+                { roleName: '部门经理', menus: '工作台、考勤日历、审批流、通知中心', buttonPerm: '编辑、查看' },
+                { roleName: 'HR管理员', menus: '工作台、考勤日历、通知中心、数据看板', buttonPerm: '新增、查看' },
+                { roleName: '财务管理员', menus: '工作台、审批流、通知中心、数据看板', buttonPerm: '仅查看' }
+            ];
+
+            return {
+                currentRole,
+                activeMenu,
+                currentMenus,
+                hasPerm,
+                onRoleChange,
+                employeeList,
+                rolePermTable
+            };
+        }
+    });
+
+    // 全局注册Element Plus与图标
+    app.use(ElementPlus, { locale: ElementPlusLocaleZhCn });
+    // 注册所有图标
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+        app.component(key, component);
+    }
+    app.mount('#app');
+</script>
+</body>
+</html>
