@@ -165,7 +165,7 @@
                 </div>
                 
                 <div class="content-area">
-                    <component :is="currentComponent"></component>
+                    <component :is="currentComponent" :key="currentMenu"></component>
                 </div>
             </div>
         </div>
@@ -313,8 +313,8 @@
                 </div>
             `
         });
-
     </script>
+
     <script src="js/pages/attendance.js"></script>
     <script src="js/pages/meeting.js"></script>
     <script src="js/pages/approval.js"></script>

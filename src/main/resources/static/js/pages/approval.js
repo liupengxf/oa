@@ -597,5 +597,5 @@ const ApprovalPage = {
         };
     }
 };
-
 app.component('page-approval', ApprovalPage);
+

@@ -331,6 +331,7 @@ const AttendancePage = {
         };
 
         const formatDateStr = (date) => {
+            if (!date) return '';
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
             const d = String(date.getDate()).padStart(2, '0');
@@ -352,9 +353,9 @@ const AttendancePage = {
         };
 
         const getCellStyle = (date) => {
+            if (!date) return {};
             const dateStr = formatDateStr(date);
             const record = attendanceRecords.value.find(r => r.checkDate === dateStr);
-            console.log('转换后的日期:', dateStr, '找到的记录:', record); // 打印看看
             if (!record) {
                 return { backgroundColor: '#fff1f0' };
             }
@@ -366,9 +367,9 @@ const AttendancePage = {
         };
 
         const getStatusText = (date) => {
+            if (!date) return '';
             const dateStr = formatDateStr(date);
             const record = attendanceRecords.value.find(r => r.checkDate === dateStr);
-            console.log('转换后的日期:', dateStr, '找到的记录:', record); // 打印看看
             if (!record) return '缺卡';
             if (record.status === 1) return '正常';
             if (record.status === 2) return '迟到';
