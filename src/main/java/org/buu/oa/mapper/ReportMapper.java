@@ -1,6 +1,5 @@
 package org.buu.oa.mapper;
 
-import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -17,7 +16,6 @@ public interface ReportMapper {
             "LEFT JOIN emp_employee e ON d.id = e.dept_id AND e.status = 1 " +
             "GROUP BY d.id, d.dept_name " +
             "ORDER BY d.sort")
-    @MapKey("deptName")
     List<Map<String, Object>> selectDeptEmpCount();
 
     @Select("SELECT CASE l.leave_type " +
@@ -25,14 +23,12 @@ public interface ReportMapper {
             "COUNT(l.id) as count " +
             "FROM leave_application l " +
             "GROUP BY l.leave_type")
-    @MapKey("leaveTypeName")
     List<Map<String, Object>> selectLeaveTypeStats();
 
     @Select("SELECT DATE_FORMAT(r.create_time, '%Y-%m') as month, SUM(r.total_amount) as totalAmount " +
             "FROM expense_report r " +
             "GROUP BY DATE_FORMAT(r.create_time, '%Y-%m') " +
             "ORDER BY month")
-    @MapKey("month")
     List<Map<String, Object>> selectExpenseTrend();
 
     @Select("SELECT COUNT(CASE WHEN a.status IN (2, 3) THEN 1 END) as abnormalCount, COUNT(a.id) as totalCount " +

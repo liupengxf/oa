@@ -75,24 +75,33 @@ public class ReportController {
         
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         String fileName = URLEncoder.encode("员工台账_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")), StandardCharsets.UTF_8).replace("+", "%20");
-        response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".xlsx\"; filename*=UTF-8''" + fileName + ".xlsx");
+        
+        java.util.ArrayList<List<String>> rows = new java.util.ArrayList<>();
+        for (Map<String, Object> row : data) {
+            rows.add(java.util.List.of(
+                    String.valueOf(row.get("empNo")),
+                    String.valueOf(row.get("name")),
+                    String.valueOf(row.get("deptName")),
+                    String.valueOf(row.get("position")),
+                    String.valueOf(row.get("gender")),
+                    String.valueOf(row.get("phone")),
+                    String.valueOf(row.get("email")),
+                    String.valueOf(row.get("entryDate")),
+                    String.valueOf(row.get("statusText"))
+            ));
+        }
         
         EasyExcel.write(response.getOutputStream())
-                .head(List.of(List.of("员工编号", "姓名", "部门", "岗位", "性别", "手机号", "邮箱", "入职日期", "状态")))
+                .head(List.of(
+                        List.of("员工编号"), List.of("姓名"), List.of("部门"), List.of("岗位"), 
+                        List.of("性别"), List.of("手机号"), List.of("邮箱"), List.of("入职日期"), List.of("状态")
+                ))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .sheet("员工台账")
-                .doWrite(data.stream().map(row -> List.of(
-                        row.get("empNo"),
-                        row.get("name"),
-                        row.get("deptName"),
-                        row.get("position"),
-                        row.get("gender"),
-                        row.get("phone"),
-                        row.get("email"),
-                        row.get("entryDate"),
-                        row.get("statusText")
-                )).toList());
+                .doWrite(rows);
     }
 
     @GetMapping("/export/attendance")
@@ -112,21 +121,30 @@ public class ReportController {
         
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         String fileName = URLEncoder.encode("考勤报表_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")), StandardCharsets.UTF_8).replace("+", "%20");
-        response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".xlsx\"; filename*=UTF-8''" + fileName + ".xlsx");
+        
+        java.util.ArrayList<List<String>> rows = new java.util.ArrayList<>();
+        for (Map<String, Object> row : data) {
+            rows.add(java.util.List.of(
+                    String.valueOf(row.get("checkDate")),
+                    String.valueOf(row.get("empName")),
+                    String.valueOf(row.get("deptName")),
+                    String.valueOf(row.get("checkInTime")),
+                    String.valueOf(row.get("checkOutTime")),
+                    String.valueOf(row.get("statusText"))
+            ));
+        }
         
         EasyExcel.write(response.getOutputStream())
-                .head(List.of(List.of("打卡日期", "员工姓名", "部门", "上班时间", "下班时间", "状态")))
+                .head(List.of(
+                        List.of("打卡日期"), List.of("员工姓名"), List.of("部门"), 
+                        List.of("上班时间"), List.of("下班时间"), List.of("状态")
+                ))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .sheet("考勤报表")
-                .doWrite(data.stream().map(row -> List.of(
-                        row.get("checkDate"),
-                        row.get("empName"),
-                        row.get("deptName"),
-                        row.get("checkInTime"),
-                        row.get("checkOutTime"),
-                        row.get("statusText")
-                )).toList());
+                .doWrite(rows);
     }
 
     @GetMapping("/export/expense")
@@ -135,74 +153,102 @@ public class ReportController {
         
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         String fileName = URLEncoder.encode("报销明细_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")), StandardCharsets.UTF_8).replace("+", "%20");
-        response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".xlsx\"; filename*=UTF-8''" + fileName + ".xlsx");
+        
+        java.util.ArrayList<List<String>> rows = new java.util.ArrayList<>();
+        for (Map<String, Object> row : data) {
+            rows.add(java.util.List.of(
+                    String.valueOf(row.get("reportNo")),
+                    String.valueOf(row.get("empName")),
+                    String.valueOf(row.get("deptName")),
+                    String.valueOf(row.get("totalAmount")),
+                    String.valueOf(row.get("expenseType")),
+                    String.valueOf(row.get("description")),
+                    String.valueOf(row.get("statusText")),
+                    String.valueOf(row.get("createTime"))
+            ));
+        }
         
         EasyExcel.write(response.getOutputStream())
-                .head(List.of(List.of("报销单号", "员工姓名", "部门", "报销金额", "费用类型", "报销说明", "状态", "提交时间")))
+                .head(List.of(
+                        List.of("报销单号"), List.of("员工姓名"), List.of("部门"), List.of("报销金额"), 
+                        List.of("费用类型"), List.of("报销说明"), List.of("状态"), List.of("提交时间")
+                ))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .sheet("报销明细")
-                .doWrite(data.stream().map(row -> List.of(
-                        row.get("reportNo"),
-                        row.get("empName"),
-                        row.get("deptName"),
-                        row.get("totalAmount"),
-                        row.get("expenseType"),
-                        row.get("description"),
-                        row.get("statusText"),
-                        row.get("createTime")
-                )).toList());
+                .doWrite(rows);
     }
 
     @GetMapping("/export/comprehensive")
     public void exportComprehensiveReport(HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         String fileName = URLEncoder.encode("综合报表_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")), StandardCharsets.UTF_8).replace("+", "%20");
-        response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".xlsx\"; filename*=UTF-8''" + fileName + ".xlsx");
         
         ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
         
         WriteSheet deptSheet = EasyExcel.writerSheet(0, "部门人数")
-                .head(List.of(List.of("部门名称", "员工人数")))
+                .head(List.of(List.of("部门名称"), List.of("员工人数")))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .build();
         List<Map<String, Object>> deptData = reportService.getDeptEmpCount();
-        excelWriter.write(deptData.stream().map(row -> List.of(
-                row.get("deptName"),
-                row.get("empCount")
-        )).toList(), deptSheet);
+        java.util.ArrayList<List<String>> deptRows = new java.util.ArrayList<>();
+        for (Map<String, Object> row : deptData) {
+            deptRows.add(java.util.List.of(
+                    String.valueOf(row.get("deptName")),
+                    String.valueOf(row.get("empCount"))
+            ));
+        }
+        excelWriter.write(deptRows, deptSheet);
         
         WriteSheet leaveSheet = EasyExcel.writerSheet(1, "请假数据")
-                .head(List.of(List.of("员工姓名", "部门", "请假类型", "开始日期", "结束日期", "请假原因", "状态")))
+                .head(List.of(
+                        List.of("员工姓名"), List.of("部门"), List.of("请假类型"), 
+                        List.of("开始日期"), List.of("结束日期"), List.of("请假原因"), List.of("状态")
+                ))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .build();
         List<Map<String, Object>> leaveData = reportService.getLeaveList();
-        excelWriter.write(leaveData.stream().map(row -> List.of(
-                row.get("empName"),
-                row.get("deptName"),
-                row.get("leaveTypeName"),
-                row.get("startDate"),
-                row.get("endDate"),
-                row.get("reason"),
-                row.get("statusText")
-        )).toList(), leaveSheet);
+        java.util.ArrayList<List<String>> leaveRows = new java.util.ArrayList<>();
+        for (Map<String, Object> row : leaveData) {
+            leaveRows.add(java.util.List.of(
+                    String.valueOf(row.get("empName")),
+                    String.valueOf(row.get("deptName")),
+                    String.valueOf(row.get("leaveTypeName")),
+                    String.valueOf(row.get("startDate")),
+                    String.valueOf(row.get("endDate")),
+                    String.valueOf(row.get("reason")),
+                    String.valueOf(row.get("statusText"))
+            ));
+        }
+        excelWriter.write(leaveRows, leaveSheet);
         
         WriteSheet expenseSheet = EasyExcel.writerSheet(2, "报销数据")
-                .head(List.of(List.of("报销单号", "员工姓名", "部门", "报销金额", "费用类型", "报销说明", "状态", "提交时间")))
+                .head(List.of(
+                        List.of("报销单号"), List.of("员工姓名"), List.of("部门"), List.of("报销金额"), 
+                        List.of("费用类型"), List.of("报销说明"), List.of("状态"), List.of("提交时间")
+                ))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .build();
         List<Map<String, Object>> expenseData = reportService.getExpenseList();
-        excelWriter.write(expenseData.stream().map(row -> List.of(
-                row.get("reportNo"),
-                row.get("empName"),
-                row.get("deptName"),
-                row.get("totalAmount"),
-                row.get("expenseType"),
-                row.get("description"),
-                row.get("statusText"),
-                row.get("createTime")
-        )).toList(), expenseSheet);
+        java.util.ArrayList<List<String>> expenseRows = new java.util.ArrayList<>();
+        for (Map<String, Object> row : expenseData) {
+            expenseRows.add(java.util.List.of(
+                    String.valueOf(row.get("reportNo")),
+                    String.valueOf(row.get("empName")),
+                    String.valueOf(row.get("deptName")),
+                    String.valueOf(row.get("totalAmount")),
+                    String.valueOf(row.get("expenseType")),
+                    String.valueOf(row.get("description")),
+                    String.valueOf(row.get("statusText")),
+                    String.valueOf(row.get("createTime"))
+            ));
+        }
+        excelWriter.write(expenseRows, expenseSheet);
         
         excelWriter.finish();
     }
