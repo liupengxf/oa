@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 加班申请服务实现类
@@ -23,11 +22,30 @@ import java.util.concurrent.atomic.AtomicLong;
 public class OvertimeApplicationServiceImpl extends ServiceImpl<OvertimeApplicationMapper, OvertimeApplication> implements OvertimeApplicationService {
 
     private final ApprovalRecordMapper approvalRecordMapper;
-    /** 序列号生成器，用于生成加班单号 */
-    private final AtomicLong sequence = new AtomicLong(1);
 
     public OvertimeApplicationServiceImpl(ApprovalRecordMapper approvalRecordMapper) {
         this.approvalRecordMapper = approvalRecordMapper;
+    }
+
+    private int getNextSequence() {
+        String currentMonth = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+        String prefix = "OT" + currentMonth;
+        
+        List<OvertimeApplication> list = baseMapper.selectList(new LambdaQueryWrapper<OvertimeApplication>()
+            .likeRight(OvertimeApplication::getOvertimeNo, prefix)
+            .orderByDesc(OvertimeApplication::getOvertimeNo));
+        
+        if (list == null || list.isEmpty()) {
+            return 1;
+        }
+        
+        String lastNo = list.get(0).getOvertimeNo();
+        try {
+            int seq = Integer.parseInt(lastNo.substring(prefix.length()));
+            return seq + 1;
+        } catch (NumberFormatException e) {
+            return list.size() + 1;
+        }
     }
 
     /**
@@ -39,11 +57,11 @@ public class OvertimeApplicationServiceImpl extends ServiceImpl<OvertimeApplicat
     @Override
     @Transactional
     public OvertimeApplication create(OvertimeApplication application) {
-        // 生成加班单号：JB + 年月 + 3位序列号
-        String no = "JB" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM")) + 
-                     String.format("%03d", sequence.getAndIncrement());
+        String currentMonth = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+        int seq = getNextSequence();
+        String no = "OT" + currentMonth + String.format("%03d", seq);
         application.setOvertimeNo(no);
-        application.setStatus("PENDING");  // 设置为待审批状态
+        application.setStatus("PENDING");
         baseMapper.insert(application);
         return application;
     }
