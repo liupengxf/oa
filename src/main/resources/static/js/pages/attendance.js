@@ -157,7 +157,7 @@ const AttendancePage = {
         const { ref, computed, onMounted, watch } = Vue;
         const { ElMessage } = ElementPlus;
 
-        const currentDate = ref(new Date());
+        const currentDate = ref(new Date(2026, 5, 1));
         const attendanceRecords = ref([]);
         const checking = ref(false);
         const showLeaveDialog = ref(false);
@@ -330,11 +330,19 @@ const AttendancePage = {
             return time.getTime() < leaveForm.value.startDate.getTime();
         };
 
+        const toDateObj = (date) => {
+            if (!date) return null;
+            if (date instanceof Date) return date;
+            if (typeof date === 'string') return new Date(date);
+            return null;
+        };
+
         const formatDateStr = (date) => {
-            if (!date) return '';
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
+            const dateObj = toDateObj(date);
+            if (!dateObj) return '';
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
         };
 
