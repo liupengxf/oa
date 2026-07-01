@@ -274,6 +274,18 @@ const ApprovalPage = {
             }
         };
 
+        const formatDateTimeForSubmit = (date) => {
+            if (!date) return '';
+            const d = new Date(date);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const h = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            const s = String(d.getSeconds()).padStart(2, '0');
+            return `${y}-${m}-${day} ${h}:${min}:${s}`;
+        };
+
         const submitOvertime = async () => {
             if (!overtimeForm.value.overtimeType || !overtimeForm.value.startTime || !overtimeForm.value.endTime) {
                 ElMessage.warning('请填写完整信息');
@@ -282,8 +294,8 @@ const ApprovalPage = {
             try {
                 await axios.post('/api/overtime', {
                     overtimeType: overtimeForm.value.overtimeType,
-                    startTime: overtimeForm.value.startTime,
-                    endTime: overtimeForm.value.endTime,
+                    startTime: formatDateTimeForSubmit(overtimeForm.value.startTime),
+                    endTime: formatDateTimeForSubmit(overtimeForm.value.endTime),
                     reason: overtimeForm.value.reason
                 });
                 ElMessage.success('加班申请提交成功');
@@ -291,7 +303,7 @@ const ApprovalPage = {
                 overtimeForm.value = { overtimeType: null, startTime: null, endTime: null, reason: '' };
                 loadOvertimeList();
             } catch (e) {
-                ElMessage.error('提交失败');
+                ElMessage.error('提交失败: ' + (e.response?.data?.message || e.message));
             }
         };
 
