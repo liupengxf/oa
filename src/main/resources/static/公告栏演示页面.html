@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OA协同办公平台 - 通知中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", system-ui, sans-serif;
+        }
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        /* 顶部导航栏 */
+        .header-top {
+            height: 70px;
+            background-color: #0a1a33;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 40px;
+        }
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background-color: #409eff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .breadcrumb {
+            color: #c0c8d8;
+            font-size: 16px;
+        }
+        .user-bar {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-tag {
+            background: #409eff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #67c23a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* 主体左右布局 */
+        .container-main {
+            display: flex;
+        }
+
+        /* 左侧侧边栏 */
+        .sidebar-left {
+            width: 180px;
+            background-color: #0f2140;
+            min-height: calc(100vh - 70px);
+            padding-top: 20px;
+        }
+        .sidebar-menu {
+            list-style: none;
+        }
+        .sidebar-menu li {
+            height: 50px;
+            line-height: 50px;
+            padding: 0 20px;
+            color: #a0b4d8;
+            font-size: 16px;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-menu li.active {
+            background-color: rgba(64, 158, 255, 0.2);
+            color: #409eff;
+            border-left: 4px solid #409eff;
+        }
+        .sidebar-menu .split-title {
+            padding-top: 10px;
+            font-size: 13px;
+            color: #a0b4d8;
+        }
+
+        /* 右侧内容区域 */
+        .content-right {
+            flex: 1;
+            padding: 20px;
+        }
+        .page-card {
+            background: #fff;
+            border-radius: 6px;
+            padding: 24px;
+        }
+        .page-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .page-title {
+            font-size: 26px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .bell-icon {
+            color: #e6a23c;
+        }
+        .page-operate {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .unread-count-text {
+            color: #f56c6c;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* 按钮通用样式 */
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        .btn-outline-danger {
+            background: #fff;
+            border: 1px solid #f56c6c;
+            color: #f56c6c;
+        }
+        .btn-primary {
+            background: #409eff;
+            color: #fff;
+        }
+        .btn-secondary {
+            background: #909399;
+            color: #fff;
+        }
+        .btn-sm-danger {
+            background: #f56c6c;
+            color: #fff;
+        }
+        .btn-sm-outline {
+            background: #fff;
+            border: 1px solid #409eff;
+            color: #409eff;
+        }
+
+        /* 消息列表 */
+        .msg-list-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        .msg-item {
+            padding: 16px 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .msg-item:hover {
+            background-color: #f7f8fa;
+        }
+        .msg-item:last-child {
+            border-bottom: none;
+        }
+        .msg-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .msg-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dot-unread {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #f56c6c;
+            display: inline-block;
+        }
+        .msg-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+        .msg-time {
+            color: #909399;
+            font-size: 14px;
+        }
+        .msg-desc {
+            margin-top: 6px;
+            color: #606266;
+            font-size: 15px;
+            padding-left: 18px;
+        }
+
+        /* 弹窗遮罩层 */
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .modal-wrap {
+            background: #fff;
+            border-radius: 6px;
+            width: 70%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-sm-wrap {
+            max-width: 600px;
+            width: 50%;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .modal-close {
+            background: transparent;
+            font-size: 20px;
+            padding: 0 8px;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* 表单样式 */
+        .form-item {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .text-danger {
+            color: #f56c6c;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-input-sm {
+            padding: 6px 8px;
+        }
+        .form-textarea {
+            min-height: 300px;
+            resize: vertical;
+        }
+
+        /* 自定义人员输入行 */
+        .custom-person-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header-top">
+        <div class="logo">
+            <div class="logo-icon">OA</div>
+            OA协同办公平台
+        </div>
+        <div class="breadcrumb">首页 / 通知中心</div>
+        <div class="user-bar">
+            <span class="user-tag">管理员</span>
+            <span>admin</span>
+            <div class="avatar">管</div>
+        </div>
+    </div>
+
+    <!-- 主体容器 -->
+    <div class="container-main">
+        <!-- 左侧静态侧边栏 -->
+        <div class="sidebar-left">
+            <ul class="sidebar-menu">
+                <li>工作台</li>
+                <li>工作台</li>
+                <li>考勤日历</li>
+                <li>数据看板</li>
+                <li class="split-title">业务流程</li>
+                <li>审批流</li>
+                <li class="active">通知中心</li>
+            </ul>
+        </div>
+
+        <!-- 右侧内容区 -->
+        <div class="content-right">
+            <div class="page-card">
+                <div class="page-head">
+                    <div class="page-title">
+                        <span class="bell-icon">🔔</span>
+                        消息通知中心
+                    </div>
+                    <div class="page-operate">
+                        <span class="unread-count-text" id="unreadCount">2条未读</span>
+                        <button class="btn-outline-danger" id="readAllBtn">一键已读</button>
+                        <button class="btn-primary" id="openPublishModalBtn">发布公告</button>
+                    </div>
+                </div>
+
+                <h5 class="msg-list-title">消息列表</h5>
+                <div class="msg-list" id="msgList">
+                    <!-- 未读消息1 -->
+                    <div class="msg-item" data-read="0">
+                        <div class="msg-top-row">
+                            <div class="msg-title-row">
+                                <span class="dot-unread"></span>
+                                <div class="msg-title">报销审批通过</div>
+                            </div>
+                            <div class="msg-time">10分钟前</div>
+                        </div>
+                        <div class="msg-desc">您的差旅费报销单 BX20250519001 已通过财务审批，预计3个工作日内到账</div>
+                    </div>
+                    <!-- 未读消息2 -->
+                    <div class="msg-item" data-read="0">
+                        <div class="msg-top-row">
+                            <div class="msg-title-row">
+                                <span class="dot-unread"></span>
+                                <div class="msg-title">会议提醒</div>
+                            </div>
+                            <div class="msg-time">1小时前</div>
+                        </div>
+                        <div class="msg-desc">产品评审会将于5月20日14:00在3号会议室举行，请准时参加</div>
+                    </div>
+                    <!-- 已读消息1 -->
+                    <div class="msg-item" data-read="1">
+                        <div class="msg-top-row">
+                            <div class="msg-title-row">
+                                <div class="msg-title">考勤异常提醒</div>
+                            </div>
+                            <div class="msg-time">昨天</div>
+                        </div>
+                        <div class="msg-desc">您5月13日下班未打卡，已标记为缺卡，请及时补卡或联系HR</div>
+                    </div>
+                    <!-- 已读消息2 -->
+                    <div class="msg-item" data-read="1">
+                        <div class="msg-top-row">
+                            <div class="msg-title-row">
+                                <div class="msg-title">公告：端午节放假通知</div>
+                            </div>
+                            <div class="msg-time">昨天</div>
+                        </div>
+                        <div class="msg-desc">2026年端午节放假时间为6月22日-24日，共3天。请提前安排好工作。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 发布公告弹窗遮罩 -->
+    <div class="modal-mask" id="publishModalMask">
+        <div class="modal-wrap">
+            <div class="modal-header">
+                <div class="modal-title">发布新公告</div>
+                <button class="modal-close" id="closePublishModalBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-item">
+                    <label class="form-label">通知标题 <span class="text-danger">*</span></label>
+                    <input class="form-input" id="titleInput" placeholder="请输入公告标题">
+                </div>
+                <div class="form-item">
+                    <label class="form-label">通用接收人群</label>
+                    <select class="form-select" id="groupSelect">
+                        <option value="">不选择通用人群</option>
+                        <option value="staff">普通员工</option>
+                        <option value="manager">部门经理</option>
+                        <option value="finance">财务管理员</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label class="form-label">指定单独接收人员（可增删）</label>
+                    <div id="customPersonBox">
+                        <div class="custom-person-row">
+                            <input class="form-input form-input-sm" placeholder="输入员工姓名/工号">
+                            <button class="btn-sm-danger del-person-btn">-</button>
+                        </div>
+                    </div>
+                    <button class="btn-sm-outline" id="addPersonBtn" style="margin-top:8px;">+ 添加人员</button>
+                </div>
+                <!-- 替换为普通文本域，移除WangEditor -->
+                <div class="form-item">
+                    <label class="form-label">公告内容 <span class="text-danger">*</span></label>
+                    <textarea class="form-textarea" id="contentTextarea" placeholder="请输入公告文字内容"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelPublishBtn">取消</button>
+                <button class="btn-primary" id="submitPublishBtn">确认发布</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 消息详情弹窗遮罩 -->
+    <div class="modal-mask" id="detailModalMask">
+        <div class="modal-wrap modal-sm-wrap">
+            <div class="modal-header">
+                <div class="modal-title">消息详情</div>
+                <button class="modal-close" id="closeDetailModalBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <h3 id="detailTitle"></h3>
+                <div style="color:#909399;margin:10px 0;" id="detailTime"></div>
+                <div id="detailContent" style="line-height:1.8;font-size:16px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="closeDetailConfirmBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 无任何外部CDN脚本，纯原生JS -->
+    <script>
+        // DOM缓存
+        const unreadCountEl = document.getElementById('unreadCount');
+        const msgListDom = document.getElementById('msgList');
+        const readAllBtn = document.getElementById('readAllBtn');
+        const publishMask = document.getElementById('publishModalMask');
+        const openPublishBtn = document.getElementById('openPublishModalBtn');
+        const closePublishBtn = document.getElementById('closePublishModalBtn');
+        const cancelPublishBtn = document.getElementById('cancelPublishBtn');
+        const submitPublishBtn = document.getElementById('submitPublishBtn');
+        const titleInput = document.getElementById('titleInput');
+        const contentTextarea = document.getElementById('contentTextarea');
+        const customPersonBox = document.getElementById('customPersonBox');
+        const addPersonBtn = document.getElementById('addPersonBtn');
+        const detailMask = document.getElementById('detailModalMask');
+        const closeDetailBtn = document.getElementById('closeDetailModalBtn');
+        const closeDetailConfirmBtn = document.getElementById('closeDetailConfirmBtn');
+        const detailTitle = document.getElementById('detailTitle');
+        const detailTime = document.getElementById('detailTime');
+        const detailContent = document.getElementById('detailContent');
+
+        // 更新未读数量
+        function updateUnreadCount() {
+            const unreadItems = msgListDom.querySelectorAll('.msg-item[data-read="0"]');
+            unreadCountEl.innerText = `${unreadItems.length}条未读`;
+        }
+        updateUnreadCount();
+
+        // 一键全部已读
+        readAllBtn.addEventListener('click', () => {
+            const unreadItems = msgListDom.querySelectorAll('.msg-item[data-read="0"]');
+            unreadItems.forEach(item => {
+                item.setAttribute('data-read', '1');
+                const dot = item.querySelector('.dot-unread');
+                if (dot) dot.remove();
+            })
+            updateUnreadCount();
+        })
+
+        // 打开发布弹窗
+        openPublishBtn.addEventListener('click', () => {
+            publishMask.style.display = 'flex';
+        })
+        // 关闭发布弹窗并重置表单
+        function closePublishModal() {
+            publishMask.style.display = 'none';
+            titleInput.value = '';
+            contentTextarea.value = '';
+            customPersonBox.innerHTML = `
+                <div class="custom-person-row">
+                    <input class="form-input form-input-sm" placeholder="输入员工姓名/工号">
+                    <button class="btn-sm-danger del-person-btn">-</button>
+                </div>
+            `;
+        }
+        closePublishBtn.addEventListener('click', closePublishModal);
+        cancelPublishBtn.addEventListener('click', closePublishModal);
+
+        // 添加自定义人员输入框
+        addPersonBtn.addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = 'custom-person-row';
+            row.innerHTML = `
+                <input class="form-input form-input-sm" placeholder="输入员工姓名/工号">
+                <button class="btn-sm-danger del-person-btn">-</button>
+            `;
+            customPersonBox.appendChild(row);
+        })
+        // 删除人员行
+        customPersonBox.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('del-person-btn')) return;
+            const allRows = customPersonBox.querySelectorAll('.custom-person-row');
+            if (allRows.length <= 1) {
+                alert('至少保留一条人员输入框');
+                return;
+            }
+            e.target.closest('.custom-person-row').remove();
+        })
+
+        // 提交发布校验（文本框非空判断）
+        submitPublishBtn.addEventListener('click', () => {
+            const title = titleInput.value.trim();
+            const content = contentTextarea.value.trim();
+            if (!title) {
+                alert('请输入公告标题');
+                return;
+            }
+            if (!content) {
+                alert('请填写公告内容');
+                return;
+            }
+            alert('公告发布成功（前端模拟）');
+            closePublishModal();
+        })
+
+        // 消息点击打开详情弹窗
+        msgListDom.addEventListener('click', (e) => {
+            const msgItem = e.target.closest('.msg-item');
+            if (!msgItem) return;
+            const titleText = msgItem.querySelector('.msg-title').innerText;
+            const timeText = msgItem.querySelector('.msg-time').innerText;
+            const descText = msgItem.querySelector('.msg-desc').innerText;
+            const isUnread = msgItem.getAttribute('data-read') === '0';
+
+            detailTitle.innerText = titleText;
+            detailTime.innerText = timeText;
+            detailContent.innerText = descText;
+            detailMask.style.display = 'flex';
+
+            // 关闭弹窗标记已读
+            function handleCloseDetail() {
+                detailMask.style.display = 'none';
+                if (isUnread) {
+                    msgItem.setAttribute('data-read', '1');
+                    const dot = msgItem.querySelector('.dot-unread');
+                    if (dot) dot.remove();
+                    updateUnreadCount();
+                }
+                closeDetailBtn.removeEventListener('click', handleCloseDetail);
+                closeDetailConfirmBtn.removeEventListener('click', handleCloseDetail);
+            }
+            closeDetailBtn.addEventListener('click', handleCloseDetail);
+            closeDetailConfirmBtn.addEventListener('click', handleCloseDetail);
+        })
+    </script>
+</body>
+</html>

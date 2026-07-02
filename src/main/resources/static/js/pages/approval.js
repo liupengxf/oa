@@ -482,4 +482,6 @@ const ApprovalPage = {
     }
 };
 
-app.component('page-approval', ApprovalPage);
+if (window.appInstance) {
+    window.appInstance.component('page-approval', ApprovalPage);
+}

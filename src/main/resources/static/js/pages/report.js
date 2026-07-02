@@ -206,4 +206,6 @@ const ReportPage = {
     }
 };
 
-app.component('page-report', ReportPage);
+if (window.appInstance) {
+    window.appInstance.component('page-report', ReportPage);
+}
