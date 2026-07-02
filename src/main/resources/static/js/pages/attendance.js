@@ -462,4 +462,6 @@ const AttendancePage = {
     }
 };
 
-app.component('page-attendance', AttendancePage);
+if (window.appInstance) {
+    window.appInstance.component('page-attendance', AttendancePage);
+}

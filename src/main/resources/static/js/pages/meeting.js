@@ -679,4 +679,6 @@ const MeetingPage = {
     }
 };
 
-app.component('page-meeting', MeetingPage);
+if (window.appInstance) {
+    window.appInstance.component('page-meeting', MeetingPage);
+}

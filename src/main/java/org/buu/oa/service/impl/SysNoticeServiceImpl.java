@@ -11,7 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 通知服务实现类
@@ -37,6 +41,47 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         wrapper.eq(SysNotice::getStatus, 1);          // 只查询已发布的通知
         wrapper.orderByDesc(SysNotice::getCreateTime); // 按创建时间倒序排列
         return baseMapper.selectList(wrapper);
+    }
+
+    /**
+     * 查询已发布的通知列表（带用户已读状态）
+     * @param userId 用户ID
+     * @return 通知列表（包含已读状态）
+     */
+    @Override
+    public List<Map<String, Object>> listPublishedWithReadStatus(Long userId) {
+        List<SysNotice> published = listPublished();
+        if (published.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> noticeIds = published.stream().map(SysNotice::getId).collect(Collectors.toSet());
+        
+        final Set<Long> readNoticeIds;
+        if (userId != null) {
+            LambdaQueryWrapper<SysNoticeRead> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(SysNoticeRead::getUserId, userId);
+            wrapper.in(SysNoticeRead::getNoticeId, noticeIds);
+            readNoticeIds = sysNoticeReadMapper.selectList(wrapper).stream()
+                    .map(SysNoticeRead::getNoticeId)
+                    .collect(Collectors.toSet());
+        } else {
+            readNoticeIds = Set.of();
+        }
+
+        return published.stream().map(notice -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", notice.getId());
+            map.put("title", notice.getTitle());
+            map.put("content", notice.getContent());
+            map.put("publisherId", notice.getPublisherId());
+            map.put("type", notice.getType());
+            map.put("status", notice.getStatus());
+            map.put("createTime", notice.getCreateTime());
+            map.put("updateTime", notice.getUpdateTime());
+            map.put("read", readNoticeIds.contains(notice.getId()));
+            return map;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -85,7 +130,31 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         wrapper.in(SysNoticeRead::getNoticeId, 
             published.stream().map(SysNotice::getId).toList());
         
-        // 未读数量 = 已发布通知总数 - 已读通知数量
         return published.size() - sysNoticeReadMapper.selectCount(wrapper);
+    }
+
+    /**
+     * 创建公告
+     * @param notice 公告实体
+     * @return 创建后的公告
+     */
+    @Override
+    @Transactional
+    public SysNotice create(SysNotice notice) {
+        baseMapper.insert(notice);
+        return notice;
+    }
+
+    /**
+     * 一键全部已读
+     * @param userId 用户ID
+     */
+    @Override
+    @Transactional
+    public void readAll(Long userId) {
+        List<SysNotice> published = listPublished();
+        for (SysNotice notice : published) {
+            markAsRead(notice.getId(), userId);
+        }
     }
 }
