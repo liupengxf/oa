@@ -47,17 +47,53 @@ const ReportPage = {
 
         const initCharts = () => {
             if (window.echarts) {
-                if (deptChartRef.value && !deptChart) {
-                    deptChart = echarts.init(deptChartRef.value);
+                initEchartsInstance();
+            } else {
+                const existingScript = document.querySelector('script[src*="echarts"]');
+                if (existingScript) {
+                    existingScript.onload = () => {
+                        initEchartsInstance();
+                    };
+                    if (window.echarts) {
+                        initEchartsInstance();
+                    }
+                } else {
+                    const script = document.createElement('script');
+                    script.src = 'lib/echarts/echarts.min.js?v=NEWVERSION004';
+                    script.onload = () => {
+                        initEchartsInstance();
+                    };
+                    script.onerror = () => {
+                        console.error('Failed to load echarts');
+                    };
+                    document.head.appendChild(script);
                 }
-                if (leaveChartRef.value && !leaveChart) {
-                    leaveChart = echarts.init(leaveChartRef.value);
-                }
-                if (expenseChartRef.value && !expenseChart) {
-                    expenseChart = echarts.init(expenseChartRef.value);
-                }
-                refreshData();
             }
+        };
+
+        const initEchartsInstance = () => {
+            if (deptChartRef.value) {
+                if (deptChart) {
+                    deptChart.dispose();
+                    deptChart = null;
+                }
+                deptChart = echarts.init(deptChartRef.value);
+            }
+            if (leaveChartRef.value) {
+                if (leaveChart) {
+                    leaveChart.dispose();
+                    leaveChart = null;
+                }
+                leaveChart = echarts.init(leaveChartRef.value);
+            }
+            if (expenseChartRef.value) {
+                if (expenseChart) {
+                    expenseChart.dispose();
+                    expenseChart = null;
+                }
+                expenseChart = echarts.init(expenseChartRef.value);
+            }
+            refreshData();
         };
 
         const refreshData = async () => {
@@ -191,9 +227,18 @@ const ReportPage = {
 
         onUnmounted(() => {
             window.removeEventListener('resize', handleResize);
-            deptChart && deptChart.dispose();
-            leaveChart && leaveChart.dispose();
-            expenseChart && expenseChart.dispose();
+            if (deptChart) {
+                deptChart.dispose();
+                deptChart = null;
+            }
+            if (leaveChart) {
+                leaveChart.dispose();
+                leaveChart = null;
+            }
+            if (expenseChart) {
+                expenseChart.dispose();
+                expenseChart = null;
+            }
         });
 
         return {
