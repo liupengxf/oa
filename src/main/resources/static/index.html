@@ -32,13 +32,35 @@
         .page-header h2 { font-size: 22px; color: #333; }
         .header-right { display: flex; gap: 10px; }
         .calendar-section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .calendar-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px; width: 100%; height: 100%; min-height: 70px; box-sizing: border-box; }
-        .date-num { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 4px; }
-        .status-text { font-size: 12px; color: #666; }
-        .el-calendar-table .el-calendar-day.status-normal .status-text { color: #52c41a; }
-        .el-calendar-table .el-calendar-day.status-late .status-text { color: #faad14; }
-        .el-calendar-table .el-calendar-day.status-absent .status-text { color: #f5222d; }
-        .el-calendar-table .el-calendar-day.status-sick .status-text { color: #1890ff; }
+        .calendar-legend { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f0f0f0; }
+        .legend-title { font-size: 14px; color: #666; }
+        .legend-items { display: flex; gap: 20px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .legend-dot.normal { background: #52c41a; }
+        .legend-dot.late { background: #faad14; }
+        .legend-dot.absent { background: #f5222d; }
+        .legend-dot.sick { background: #1890ff; }
+        .att-calendar { margin-top: 15px; }
+        .att-calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .att-calendar-title { font-size: 18px; font-weight: 600; color: #333; }
+        .att-calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+        .att-calendar-weekdays span { text-align: center; font-size: 13px; color: #666; padding: 8px 0; }
+        .att-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .att-calendar-cell { min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 6px 4px; border-radius: 6px; border: 1px solid #f0f0f0; }
+        .att-calendar-cell-empty { background: #fafafa; border: none; }
+        .att-date-num { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 2px; }
+        .att-status-dot { width: 8px; height: 8px; border-radius: 50%; margin-bottom: 2px; }
+        .att-status-dot.status-normal { background: #52c41a; }
+        .att-status-dot.status-late { background: #faad14; }
+        .att-status-dot.status-absent { background: #f5222d; }
+        .att-status-dot.status-sick { background: #1890ff; }
+        .att-status-text { font-size: 11px; margin-bottom: 2px; }
+        .att-check-time { font-size: 10px; color: #999; }
+        .att-calendar-cell.status-normal .att-status-text { color: #52c41a; }
+        .att-calendar-cell.status-late .att-status-text { color: #faad14; }
+        .att-calendar-cell.status-absent .att-status-text { color: #f5222d; }
+        .att-calendar-cell.status-sick .att-status-text { color: #1890ff; }
         .stats-section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .stats-section h3 { font-size: 18px; margin-bottom: 15px; color: #333; }
         .stats-cards { display: flex; gap: 15px; }
