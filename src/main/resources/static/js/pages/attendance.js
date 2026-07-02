@@ -32,14 +32,41 @@ const AttendancePage = {
             </div>
 
             <div class="calendar-section">
-                <el-calendar v-model="currentDate" :cell-class-name="getCellClassName">
-                    <template #dateCell="{ date, data }">
-                        <div class="calendar-cell" :style="getCellStyle(date)">
-                            <span class="date-num">{{ data.day.split('-').slice(-1)[0] }}</span>
-                            <span class="status-text">{{ getStatusText(date) }}</span>
+                <div class="calendar-legend">
+                    <span class="legend-title">打卡状态标记</span>
+                    <div class="legend-items">
+                        <span class="legend-item"><span class="legend-dot normal"></span>正常</span>
+                        <span class="legend-item"><span class="legend-dot late"></span>迟到</span>
+                        <span class="legend-item"><span class="legend-dot absent"></span>缺卡</span>
+                        <span class="legend-item"><span class="legend-dot leave"></span>请假</span>
+                    </div>
+                </div>
+                <div class="att-calendar">
+                    <div class="att-calendar-header">
+                        <el-button size="small" @click="prevMonth">‹</el-button>
+                        <span class="att-calendar-title">{{ currentMonthTitle }}</span>
+                        <el-button size="small" @click="nextMonth">›</el-button>
+                    </div>
+                    <div class="att-calendar-weekdays">
+                        <span v-for="day in weekdays" :key="day">{{ day }}</span>
+                    </div>
+                    <div class="att-calendar-grid">
+                        <div 
+                            v-for="(day, index) in calendarDays" 
+                            :key="index" 
+                            class="att-calendar-cell"
+                            :class="day.inMonth ? getStatusClass(day.dateStr) : 'att-calendar-cell-empty'"
+                            :style="day.inMonth ? getCellStyle(day.dateStr) : {}"
+                        >
+                            <template v-if="day.inMonth">
+                                <span class="att-date-num">{{ day.day }}</span>
+                                <span class="att-status-dot" :class="getStatusClass(day.dateStr)"></span>
+                                <span class="att-status-text">{{ getStatusText(day.dateStr) }}</span>
+                                <span class="att-check-time">{{ getCheckTime(day.dateStr) }}</span>
+                            </template>
                         </div>
-                    </template>
-                </el-calendar>
+                    </div>
+                </div>
             </div>
 
             <div class="stats-section">
@@ -66,11 +93,11 @@ const AttendancePage = {
                             <div class="stat-label">缺卡</div>
                         </div>
                     </div>
-                    <div class="stat-card sick">
-                        <div class="stat-icon">🤒</div>
+                    <div class="stat-card leave">
+                        <div class="stat-icon">📋</div>
                         <div class="stat-info">
-                            <div class="stat-value">{{ stats.sickLeaveDays }}</div>
-                            <div class="stat-label">病假</div>
+                            <div class="stat-value">{{ stats.leaveDays }}</div>
+                            <div class="stat-label">请假</div>
                         </div>
                     </div>
                     <div class="stat-card total">
@@ -157,7 +184,7 @@ const AttendancePage = {
         const { ref, computed, onMounted, watch } = Vue;
         const { ElMessage } = ElementPlus;
 
-        const currentDate = ref(new Date(2026, 5, 1));
+        const currentDate = ref(new Date());
         const attendanceRecords = ref([]);
         const checking = ref(false);
         const showLeaveDialog = ref(false);
@@ -169,6 +196,59 @@ const AttendancePage = {
             reason: ''
         });
 
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
+        const currentMonthTitle = computed(() => {
+            const year = currentDate.value.getFullYear();
+            const month = currentDate.value.getMonth() + 1;
+            return `${year}年${month}月`;
+        });
+
+        const calendarDays = computed(() => {
+            const year = currentDate.value.getFullYear();
+            const month = currentDate.value.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const firstDayOfWeek = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+            const days = [];
+            
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                days.push({ inMonth: false });
+            }
+            
+            for (let i = 1; i <= totalDays; i++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                days.push({
+                    day: i,
+                    dateStr: dateStr,
+                    inMonth: true
+                });
+            }
+            
+            return days;
+        });
+
+        const prevMonth = () => {
+            const year = currentDate.value.getFullYear();
+            const month = currentDate.value.getMonth();
+            if (month === 0) {
+                currentDate.value = new Date(year - 1, 11, 1);
+            } else {
+                currentDate.value = new Date(year, month - 1, 1);
+            }
+        };
+
+        const nextMonth = () => {
+            const year = currentDate.value.getFullYear();
+            const month = currentDate.value.getMonth();
+            if (month === 11) {
+                currentDate.value = new Date(year + 1, 0, 1);
+            } else {
+                currentDate.value = new Date(year, month + 1, 1);
+            }
+        };
+
         const filteredRecords = computed(() => {
             const currentMonth = currentDate.value.getMonth();
             const currentYear = currentDate.value.getFullYear();
@@ -177,6 +257,8 @@ const AttendancePage = {
                 return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
             }).sort((a, b) => new Date(b.checkDate) - new Date(a.checkDate));
         });
+
+        const leaveDays = ref(0);
 
         const stats = computed(() => {
             const currentMonth = currentDate.value.getMonth();
@@ -190,20 +272,18 @@ const AttendancePage = {
             let normalDays = 0;
             let lateDays = 0;
             let absentDays = 0;
-            let sickLeaveDays = 0;
 
             monthRecords.forEach(record => {
                 if (record.status === 1) normalDays++;
                 else if (record.status === 2) lateDays++;
                 else if (record.status === 3) absentDays++;
-                else if (record.status === 4) sickLeaveDays++;
             });
 
             const checkedDates = new Set(monthRecords.map(r => r.checkDate));
             const uncheckedDays = totalDays - checkedDates.size;
             absentDays += uncheckedDays;
 
-            return { normalDays, lateDays, absentDays, sickLeaveDays, totalDays };
+            return { normalDays, lateDays, absentDays, leaveDays: leaveDays.value, totalDays };
         });
 
         const canCheckIn = computed(() => {
@@ -221,15 +301,51 @@ const AttendancePage = {
         const hasCheckedIn = computed(() => !canCheckIn.value);
         const hasCheckedOut = computed(() => !canCheckOut.value);
 
-        const fetchAttendanceRecords = async () => {
+        const fetchAttendanceRecords = async (autoSwitch = false) => {
             const year = currentDate.value.getFullYear();
             const month = currentDate.value.getMonth() + 1;
             try {
-                const res = await axios.get('/api/attendance/monthly', {
-                    params: { year, month }
-                });
+                const [res, leaveRes] = await Promise.all([
+                    axios.get('/api/attendance/monthly', {
+                        params: { year, month }
+                    }),
+                    axios.get('/api/attendance/leave-stats', {
+                        params: { year, month }
+                    })
+                ]);
+                
                 if (res.data.code === 200) {
                     attendanceRecords.value = res.data.data;
+                }
+                
+                if (leaveRes.data.code === 200) {
+                    leaveDays.value = leaveRes.data.data.leaveDays || 0;
+                }
+                
+                if (autoSwitch && attendanceRecords.value.length === 0) {
+                    let foundData = false;
+                    let checkYear = year;
+                    let checkMonth = month;
+                    for (let i = 0; i < 12; i++) {
+                        checkMonth--;
+                        if (checkMonth < 1) {
+                            checkMonth = 12;
+                            checkYear--;
+                        }
+                        if (checkYear < 2020) break;
+                        const checkRes = await axios.get('/api/attendance/monthly', {
+                            params: { year: checkYear, month: checkMonth }
+                        });
+                        if (checkRes.data.code === 200 && checkRes.data.data.length > 0) {
+                            currentDate.value = new Date(checkYear, checkMonth - 1, 1);
+                            attendanceRecords.value = checkRes.data.data;
+                            foundData = true;
+                            break;
+                        }
+                    }
+                    if (!foundData) {
+                        ElMessage.info('当前无考勤数据，请先打卡');
+                    }
                 }
             } catch (e) {
                 console.error('获取考勤记录失败', e);
@@ -238,7 +354,7 @@ const AttendancePage = {
         };
 
         watch(currentDate, () => {
-            fetchAttendanceRecords();
+            fetchAttendanceRecords(false);
         });
 
         const handleCheckIn = async () => {
@@ -355,8 +471,7 @@ const AttendancePage = {
             }
             if (record.status === 1) return 'status-normal';
             if (record.status === 2) return 'status-late';
-            if (record.status === 3) return 'status-absent';
-            if (record.status === 4) return 'status-sick';
+            if (record.status === 4) return 'status-leave';
             return 'status-absent';
         };
 
@@ -369,7 +484,6 @@ const AttendancePage = {
             }
             if (record.status === 1) return { backgroundColor: '#f6ffed' };
             if (record.status === 2) return { backgroundColor: '#fffbe6' };
-            if (record.status === 3) return { backgroundColor: '#fff1f0' };
             if (record.status === 4) return { backgroundColor: '#e6f7ff' };
             return { backgroundColor: '#fff1f0' };
         };
@@ -381,9 +495,18 @@ const AttendancePage = {
             if (!record) return '缺卡';
             if (record.status === 1) return '正常';
             if (record.status === 2) return '迟到';
-            if (record.status === 3) return '缺卡';
-            if (record.status === 4) return '病假';
+            if (record.status === 4) return '请假';
             return '缺卡';
+        };
+
+        const getCheckTime = (date) => {
+            if (!date) return '';
+            const dateStr = formatDateStr(date);
+            const record = attendanceRecords.value.find(r => r.checkDate === dateStr);
+            if (!record) return '';
+            const checkIn = record.checkInTime ? formatDateTime(record.checkInTime) : '--';
+            const checkOut = record.checkOutTime ? formatDateTime(record.checkOutTime) : '--';
+            return `${checkIn}-${checkOut}`;
         };
 
         const getCellClassName = ({ date }) => {
@@ -429,7 +552,7 @@ const AttendancePage = {
         };
 
         onMounted(() => {
-            fetchAttendanceRecords();
+            fetchAttendanceRecords(true);
         });
 
         return {
@@ -444,6 +567,11 @@ const AttendancePage = {
             hasCheckedOut,
             showLeaveDialog,
             leaveForm,
+            weekdays,
+            currentMonthTitle,
+            calendarDays,
+            prevMonth,
+            nextMonth,
             handleCheckIn,
             handleCheckOut,
             handleLeaveSubmit,
@@ -451,6 +579,7 @@ const AttendancePage = {
             disabledEndDate,
             getStatusClass,
             getStatusText,
+            getCheckTime,
             getCellClassName,
             getCellStyle,
             getStatusTagType,

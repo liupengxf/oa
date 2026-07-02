@@ -23,6 +23,8 @@ public class NoticeController {
     private final SysNoticeService sysNoticeService;
     private final AuthService authService;
 
+    private static final Long DEFAULT_EMP_ID = 1L;
+
     public NoticeController(SysNoticeService sysNoticeService, AuthService authService) {
         this.sysNoticeService = sysNoticeService;
         this.authService = authService;
@@ -69,7 +71,7 @@ public class NoticeController {
     @GetMapping("/unread/count")
     public Result<Map<String, Long>> countUnread() {
         SysUser user = authService.getCurrentUser();
-        Long userId = user != null ? user.getId() : 1L;
+        Long userId = (user != null && user.getId() != null) ? user.getId() : DEFAULT_EMP_ID;
         
         long count = sysNoticeService.countUnread(userId);
         Map<String, Long> result = new HashMap<>();
